@@ -1,0 +1,121 @@
+﻿@page "/eventos"
+@using EventoTickets.Shared
+@using Microsoft.AspNetCore.SignalR.Client
+@using MudBlazor;
+
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+<h3>Eventos</h3>
+
+<p>
+    <MudFab Icon="@Icons.Material.Filled.Add" Variant="Variant.Filled" IconSize="Size.Small" Size="Size.Small" Label="Criar novo evento"
+            Color="Color.Primary" OnClick="CriarEvento" />
+</p>
+
+<MudTable Items="@eventos" Hover="true" Loading="@(eventos == null)" LoadingProgressColor="Color.Info" Dense="true">
+    <HeaderContent>
+        <MudTh>Evento</MudTh>
+        <MudTh>Data do evento</MudTh>
+        <MudTh>Evento padrão</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Evento">@context.NomeEvento</MudTd>
+        <MudTd DataLabel="Data do evento">@context.DataRealizacao</MudTd>
+        <MudTd DataLabel="Evento padrão" Style="align-content:center">
+            <MudCheckBox @bind-Checked="@context.EventoPadrao" ReadOnly="true" />
+        </MudTd>
+        <MudTd>
+            <MudTooltip Text="Talonário">
+                <MudFab Icon="@Icons.Material.Filled.MenuBook" IconSize="Size.Small" Size="Size.Small"
+                        Color="Color.Success" Disabled="@(context.DataRealizacao <= DateTime.Now)" OnClick="() => ManutencaoTaloes(context.EventoId)" />
+            </MudTooltip>
+            <MudTooltip Text="Definir como padrão">
+                <MudFab Icon="@Icons.Material.Filled.Check" IconSize="Size.Small" Size="Size.Small"
+                        Color="Color.Info" Disabled="context.EventoPadrao" OnClick="() => DefinirPadrao(context)" />
+            </MudTooltip>
+            <MudTooltip Text="Alterar">
+                <MudFab Icon="@Icons.Material.Filled.Edit" IconSize="Size.Small" Size="Size.Small"
+                        OnClick="() => AlterarEvento(context.EventoId)" Color="Color.Primary" />
+            </MudTooltip>
+            <MudTooltip Text="Excluir">
+                <MudFab Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" IconSize="Size.Small" Size="Size.Small"
+                        Color="Color.Error" OnClick="() => ExcluirEvento(context.EventoId)" />
+            </MudTooltip>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    Evento[] eventos;
+
+    private HubConnection hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/eventohub"))
+            .Build();
+
+        hubConnection.On("ReceiveMessage", () =>
+        {
+            CallCarregarDados();
+            StateHasChanged();
+        });
+
+        await hubConnection.StartAsync();
+        await CarregarDados();
+    }
+
+    private void CallCarregarDados()
+    {
+        Task.Run(async () =>
+        {
+            await CarregarDados();
+        });
+    }
+
+    protected async Task CarregarDados()
+    {
+        eventos = await Http.GetFromJsonAsync<Evento[]>("api/Eventos");
+        StateHasChanged();
+    }
+
+    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+    Task SendMessage() => hubConnection.SendAsync("SendMessage");
+
+    public void Dispose()
+    {
+        _ = hubConnection.DisposeAsync();
+    }
+
+    [Inject] private IDialogService DialogService { get; set; }
+
+    void AlterarEvento(string id) => NavigationManager.NavigateTo($"EditarEvento/{id}");
+    void CriarEvento() => NavigationManager.NavigateTo($"EditarEvento");
+
+    async void ExcluirEvento(string id)
+    {
+        bool? result = await DialogService.ShowMessageBox("Excluir", "Confirma a exclusão do evento?",
+            yesText: "Excluir", cancelText: "Cancelar");
+
+        if (result.GetValueOrDefault())
+        {
+            await Http.DeleteAsync("api/Eventos/" + id);
+
+            if (IsConnected) await SendMessage();
+            CallCarregarDados();
+        }
+    }
+
+    async void DefinirPadrao(Evento evento)
+    {
+        var retorno = await Http.PostAsJsonAsync($"api/Eventos/DefinirEventoPadrao", evento);
+
+        if (IsConnected) await SendMessage();
+        CallCarregarDados();
+    }
+
+    void ManutencaoTaloes(string id) => NavigationManager.NavigateTo($"Talonario/{id}");
+}

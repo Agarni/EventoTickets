@@ -1,0 +1,25 @@
+﻿@using MudBlazor;
+
+<MudPaper Width="250px" Class="py-3" Square="true">
+    <MudNavMenu Class="mud-width-full">
+        <MudNavLink Href="">Home</MudNavLink>
+        <MudNavLink Icon="@Icons.Material.Filled.Dashboard" Href="/painel">Painel</MudNavLink>
+        <MudNavLink Icon="@Icons.Material.Filled.Grading" Href="/lancamentos">Lançamentos</MudNavLink>
+        <MudNavGroup Title="Manutenção" Icon="@Icons.Filled.Settings" Expanded="collapseNavMenu">
+            <MudNavLink Href="/eventos">Eventos</MudNavLink>
+            <MudNavLink Href="/talonario">Talonário</MudNavLink>
+        </MudNavGroup>
+        <MudNavLink Href="/about">About</MudNavLink>
+    </MudNavMenu>
+</MudPaper>
+
+@code {
+    private bool collapseNavMenu = false;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

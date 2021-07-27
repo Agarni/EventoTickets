@@ -1,0 +1,33 @@
+﻿@page "/"
+
+<h1>Manutenção de eventos</h1>
+
+@saudacao
+<br /><br />
+Ferramenta desenvolvida para controle de fichas, utilizando talonário e confirmação de entrega/devolução de fichas.
+<br /><br />
+
+<div>
+    Desenvolvida por: <a href="mailto:sergio_luiz@outlook.com">Sergio Luiz</a>
+</div>
+
+@code{
+    int hora = int.Parse(DateTime.Now.ToString("HH"));
+    string saudacao;
+
+    protected override void OnInitialized()
+    {
+        if (hora > 18)
+        {
+            saudacao = "Boa noite!";
+        }
+        else if (hora >= 12)
+        {
+            saudacao = "Boa tarde!";
+        }
+        else
+        {
+            saudacao = "Bom dia!";
+        }
+    }
+}

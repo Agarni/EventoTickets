@@ -1,0 +1,107 @@
+﻿@page "/editarEvento/"
+@page "/editarEvento/{id}"
+@using Microsoft.AspNetCore.SignalR.Client
+@using EventoTickets.Shared
+@using MudBlazor
+
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<MudCard Style="margin:10px">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@tipo Evento</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudForm @ref="form" @bind-IsValid="@valido" @bind-Errors="@erros">
+            <MudTextField T="string" Label="Nome evento" @bind-Value="@evento.NomeEvento" Required="true"
+                          RequiredError="Favor preencher Nome do evento" />
+            <MudTextField T="string" Label="Descrição" @bind-Value="@evento.Descricao" />
+            <div class="row form-group">
+                <div class="col">
+                    <MudDatePicker Label="Data realização" @bind-Date="date" Editable="true"
+                                   DateFormat="dd/MM/yyyy" />
+                </div>
+                <div class="col">
+                    <MudTimePicker Label="Hora" @bind-Time="hora" TimeFormat="HH:mm" Editable="true" AutoClose="true" />
+                </div>
+            </div>
+        </MudForm>
+    </MudCardContent>
+    <MudCardActions Class="d-flex justify-end py-2 px-1 mt-6">
+        <MudButton Variant="Variant.Filled" OnClick="@Cancel">Cancelar</MudButton>&nbsp;
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!valido)" 
+            OnClick="@UpdateEvento">Confirmar</MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    private HubConnection hubConnection;
+    bool valido;
+    string[] erros = { };
+    MudForm form;
+
+    [Parameter]
+    public string id { get; set; }
+
+    DateTime? date = DateTime.Today;
+    TimeSpan? hora = new TimeSpan(12, 00, 00);
+    Evento evento = new();
+    string tipo = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        tipo = string.IsNullOrWhiteSpace(id) ? "Novo" : "Editar";
+
+        if (!string.IsNullOrWhiteSpace(id))
+        {
+            evento = await Http.GetFromJsonAsync<Evento>("api/eventos/" + id);
+            date = Convert.ToDateTime(evento.DataRealizacao.ToShortDateString());
+            hora = evento.DataRealizacao.TimeOfDay;
+        }
+        else
+        {
+            date = Convert.ToDateTime(DateTime.Now.AddDays(10).ToShortDateString());
+            hora = new TimeSpan(15, 0, 0);
+        }
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/eventohub"))
+            .Build();
+
+        await hubConnection.StartAsync();
+    }
+
+    protected async Task UpdateEvento()
+    {
+        evento.DataRealizacao = date.GetValueOrDefault().Add(hora.GetValueOrDefault());
+
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            await Http.PostAsJsonAsync("api/eventos", evento);
+        }
+        else
+        {
+            await Http.PutAsJsonAsync("api/eventos/" + id, evento);
+        }
+
+        if (IsConnected) await SendMessage();
+
+        NavigationManager.NavigateTo("eventos");
+    }
+
+    Task SendMessage() => hubConnection.SendAsync("SendMessage");
+
+    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+
+    public void Dispose()
+    {
+        _ = hubConnection.DisposeAsync();
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("eventos");
+    }
+}

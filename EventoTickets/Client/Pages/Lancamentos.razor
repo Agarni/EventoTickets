@@ -1,0 +1,84 @@
+﻿@page "/lancamentos"
+
+@using EventoTickets.Shared
+@using Microsoft.AspNetCore.SignalR.Client
+@using MudBlazor;
+
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+@if (evento == null)
+{
+    <h2>Lançamentos</h2>
+    <MudSkeleton />
+    <MudSkeleton Animation="Animation.False" />
+    <MudSkeleton Animation="Animation.Wave" />
+}
+else if (string.IsNullOrWhiteSpace(evento?.NomeEvento))
+{
+    <h2>Lançamentos</h2>
+    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Evento não encontrado/cadastrado</MudAlert>
+}
+else
+{
+    if (tickets == null)
+    {
+        <h2>Lançamentos</h2>
+        <MudSkeleton />
+        <MudSkeleton Animation="Animation.False" />
+        <MudSkeleton Animation="Animation.Wave" />
+    }
+    else
+    {
+        <h2>Lançamentos: @evento.NomeEvento</h2>
+        <MudGrid>
+            <MudItem xs="3">
+                <MudTextField T="string" Label="Data da realização" ReadOnly="true" Variant="Variant.Outlined"
+                      Text="@evento.DataRealizacao.ToString()" />
+            </MudItem>
+            <MudItem xs="9">
+                <MudForm @ref="form" @bind-IsValid="@valido">
+                    <MudGrid>
+                        <MudItem xs="3">
+                            <MudNumericField T="int" Label="Número ficha" Class="pa-2 ml-auto" OnKeyDown="TicketKeyDown"
+                                     @bind-Value="numeroTicket" Required="true" />
+                        </MudItem>
+                        <MudItem>
+                            <br />
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" style="vertical-align:bottom;"
+                               OnClick="@LancarTicket">Lançar</MudButton>
+                        </MudItem>
+                        <MudItem>
+                            <br />
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="align-self-center"
+                               OnClick="@DevolverTicket">Devolver</MudButton>
+                        </MudItem>
+                        <MudItem>
+                            <br />
+                            <MudButton Variant="Variant.Filled" Color="Color.Error" Class="align-self-center"
+                               OnClick="@ReabrirTicket">Reabrir</MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudForm>
+            </MudItem>
+        </MudGrid>
+        <br />
+        <MudGrid>
+            <MudItem xs="9" md="9">
+                <MudPaper Class="d-flex flex-wrap px-2">
+                    @foreach (Ticket ticket in tickets)
+                    {
+                        <MudChip Class="pa-1 ma-1" Color="@CorTicket(ticket)" Style="width:65px; text-align:center;" 
+                            OnClick="@(() => AtualizarTicket(ticket))">
+                            @ticket.NumeroTicket
+                        </MudChip>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem>
+
+            </MudItem>
+        </MudGrid>
+    }
+}

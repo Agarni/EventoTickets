@@ -1,0 +1,96 @@
+﻿@page "/talonario"
+@page "/talonario/{Id}"
+
+@using EventoTickets.Shared
+@using EventoTickets.Shared.Requests
+@using Microsoft.AspNetCore.SignalR.Client;
+@using MudBlazor;
+
+@inject HttpClient Http;
+@inject NavigationManager NavigationManager;
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+@if (evento == null)
+{
+    <MudSkeleton />
+    <MudSkeleton Animation="Animation.False" />
+    <MudSkeleton Animation="Animation.Wave" />
+}
+else
+{
+    if (string.IsNullOrWhiteSpace(evento.NomeEvento))
+    {
+        <h3>Talonário</h3>
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Evento não encontrado</MudAlert>
+    }
+    else
+    {
+        <h2>Talonário: @evento.NomeEvento</h2>
+        <MudGrid>
+            <MudItem xs="3">
+                <MudTextField T="string" Label="Data da realização" ReadOnly="true" Variant="Variant.Outlined"
+                      Text="@evento.DataRealizacao.ToString()" />
+            </MudItem>
+            <MudItem xs="3">
+                <MudTextField T="string" Label="Quantidade talões" ReadOnly="true" Variant="Variant.Outlined"
+                      Text="@((taloes?.Count ?? 0).ToString())" />
+            </MudItem>
+        </MudGrid>
+        <br />
+        <MudCard Outlined="true">
+            <MudCardContent>
+                <MudText><h4>Gerar novos talões</h4></MudText>
+                <MudForm @ref="form" @bind-IsValid="@valido">
+                    <MudGrid>
+                        <MudItem xs="3" md="3">
+                            <MudNumericField T="int" Label="Quantidade talões" Class="pa-2 ml-auto"
+                                     @bind-Value="qtdTaloes" Required="true" />
+                        </MudItem>
+                        <MudItem xs="3" md="3">
+                            <MudNumericField T="int" Label="Nº fichas por talão" Class="pa-2 ml-auto"
+                                     @bind-Value="qtdTickets" Required="true" />
+                        </MudItem>
+                        <MudItem xs="2" md="2">
+                            <br />
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!valido)" Class="pa-2 mx-2 align-self-center"
+                                OnClick="@GerarTaloes">Gerar</MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudForm>
+            </MudCardContent>
+        </MudCard>
+        <br />
+        <MudTable Items="@taloes" Hover="true" Loading="@(taloes == null)" FixedHeader="true" Height="400px" Bordered="true"
+                  LoadingProgressColor="Color.Info" Dense="true" SelectedItem="talaoSelecionado" CanCancelEdit="true" 
+                  CommitEditTooltip="Confirmar" CancelEditTooltip="Cancelar"
+                  RowEditCommit="UpdateTalao" RowEditPreview="BackupItem" RowEditCancel="CancelarEdicaoTalao">
+            <HeaderContent>
+                <MudTh Style="text-align:center">Nº talão</MudTh>
+                <MudTh Style="text-align:center">Numeração</MudTh>
+                <MudTh>Responsável</MudTh>
+                <MudTh Style="text-align:center">Data entrega</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Nº talão" Style="text-align:center">@context.NumeroTalao</MudTd>
+                <MudTd Style="text-align:center">@($"{context.NumeroInicial} - {context.NumeroFinal}")</MudTd>
+                <MudTd DataLabel="Responsável">@context.ResponsavelTalao</MudTd>
+                <MudTd DataLabel="Data entrega" Style="text-align:center">@(context.DataEntrega.HasValue ? context.DataEntrega.Value.ToShortDateString() : "")</MudTd>
+                <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Color="@Color.Error" OnClick="() => ExcluirTalao(context)" /></MudTd>
+            </RowTemplate>
+            <RowEditingTemplate>
+                <MudTd DataLabel="Nº talão" Style="text-align:center">@context.NumeroTalao</MudTd>
+                <MudTd Style="text-align:center">@($"{context.NumeroInicial} - {context.NumeroFinal}")</MudTd>
+                <MudTd DataLabel="Responsável">
+                    <MudTextField @bind-Value="@context.ResponsavelTalao" Required RequiredError="Informe o nome" />
+                </MudTd>
+                <MudTd DataLabel="Data entrega">
+                    <MudDatePicker Label="Data realização" Editable="true" @bind-Date="context.DataEntrega"
+                                   DateFormat="dd/MM/yyyy" />
+                </MudTd>
+                <MudTd></MudTd>
+            </RowEditingTemplate>
+        </MudTable>
+    }
+}

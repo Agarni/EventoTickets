@@ -1,0 +1,71 @@
+﻿@using EventoTickets.Shared
+@using Microsoft.AspNetCore.SignalR.Client
+@using MudBlazor
+@inherits LayoutComponentBase
+
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar>
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        @evento.NomeEvento
+    </MudAppBar>
+    <MudDrawer @bind-Open="@_drawerOpen">
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+    Evento evento = new Evento { NomeEvento = "Eventos" };
+
+    private HubConnection hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/eventohub"))
+            .Build();
+
+        hubConnection.On("ReceiveMessage", () =>
+        {
+            CallCarregarEventoPadrao();
+        });
+
+        await hubConnection.StartAsync();
+        await CarregarInformacoes();
+    }
+
+    private void CallCarregarEventoPadrao()
+    {
+        Task.Run(async () =>
+        {
+            await CarregarInformacoes();
+        });
+    }
+
+    private async Task CarregarInformacoes()
+    {
+        evento = await Http.GetFromJsonAsync<Evento>("api/eventos/GetEventoPadrao");
+
+        if (evento == null)
+        {
+            evento = new Evento { NomeEvento = "Eventos" };
+        }
+
+        StateHasChanged();
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}
