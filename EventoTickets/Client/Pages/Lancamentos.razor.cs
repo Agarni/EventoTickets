@@ -33,6 +33,14 @@ namespace EventoTickets.Client.Pages
         private Evento evento;
         private HubConnection hubConnection;
         private int numeroTicket;
+
+        // Totais
+        private int totalFichas;
+        private int totalDistribuidas;
+        private int totalConfirmadas;
+        private int totalAvulsas;
+        private int totalEntregues;
+        private int totalDevolvidas;
         #endregion Variáveis globais
 
         protected override async Task OnInitializedAsync()
@@ -62,6 +70,8 @@ namespace EventoTickets.Client.Pages
                     {
                         ticketLancado.Status = ticket.Status;
                         ticketLancado.DataConfirmacao = ticket.DataConfirmacao;
+
+                        CalcularTotais();
                     }
 
                     StateHasChanged();
@@ -97,6 +107,8 @@ namespace EventoTickets.Client.Pages
                 if (retornoTickets.Sucesso)
                 {
                     tickets = retornoTickets.Result.ToList();
+
+                    CalcularTotais();
                 }
                 else
                 {
@@ -112,12 +124,21 @@ namespace EventoTickets.Client.Pages
             }
         }
 
-        private Color CorTicket(Ticket ticket) => ticket.Status switch
+        private Color CorTicket(Ticket ticket)
         {
-            StatusTicket.Entregue => Color.Default,
-            StatusTicket.Devolvido => Color.Secondary,
-            _ => Color.Info
-        };
+            var cor = ticket.Status switch
+            {
+                StatusTicket.Entregue => Color.Default,
+                StatusTicket.Devolvido => Color.Secondary,
+                StatusTicket.Avulso => Color.Success,
+                _ => Color.Info
+            };
+
+            if (!string.IsNullOrWhiteSpace(ticket.Talao.ResponsavelTalao) && ticket.Status == StatusTicket.EmAberto)
+                cor = Color.Primary;
+
+            return cor;
+        }
 
         public void TicketKeyDown(KeyboardEventArgs e)
         {
@@ -140,7 +161,8 @@ namespace EventoTickets.Client.Pages
 
         private async Task LancarTicket()
         {
-            await AtualizarTicket(numeroTicket, StatusTicket.Entregue);
+            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(numeroTicket) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
+            await AtualizarTicket(idTicket, StatusTicket.Entregue);
         }
 
         private async Task AtualizarTicket(int idTicket, StatusTicket statusTicket)
@@ -188,6 +210,8 @@ namespace EventoTickets.Client.Pages
                             ticketConsulta.Status = retorno.Result.Status;
                             ticketConsulta.DataConfirmacao = retorno.Result.DataConfirmacao;
                         }
+
+                        CalcularTotais();
                     }
 
                     numeroTicket = 0;
@@ -197,12 +221,24 @@ namespace EventoTickets.Client.Pages
 
         private async void DevolverTicket()
         {
-            await AtualizarTicket(numeroTicket, StatusTicket.Devolvido);
+            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(numeroTicket) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
+            await AtualizarTicket(idTicket, StatusTicket.Devolvido);
         }
 
         private async void ReabrirTicket()
         {
-            await AtualizarTicket(numeroTicket, StatusTicket.EmAberto);
+            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(numeroTicket) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
+            await AtualizarTicket(idTicket, StatusTicket.EmAberto);
+        }
+
+        private void CalcularTotais()
+        {
+            totalFichas = tickets?.Count ?? 0;
+            totalDistribuidas = tickets?.Count(x => !string.IsNullOrWhiteSpace(x.Talao?.ResponsavelTalao)) ?? 0;
+            totalConfirmadas = tickets?.Count(x => x.Status == StatusTicket.Devolvido || x.Status == StatusTicket.Entregue) ?? 0;
+            totalAvulsas = 0; // definir
+            totalEntregues = tickets?.Count(x => x.Status == StatusTicket.Entregue) ?? 0;
+            totalDevolvidas = tickets?.Count(x => x.Status == StatusTicket.Devolvido) ?? 0;
         }
     }
 }

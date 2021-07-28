@@ -1,0 +1,70 @@
+﻿@using MudBlazor
+
+<MudPaper Outlined="true" Square="true" Style="margin-right:20px">
+    <MudList>
+        <MudListItem>
+            <MudPaper Class="mud-width-full mud-theme-primary" Elevation="0" Outlined="true">
+                <MudText Align="Align.Center" Typo="Typo.h6">Distribuídas</MudText>
+            </MudPaper>
+            <MudText Align="Align.Center" Typo="Typo.h4">@TotalDistribuidas</MudText>
+        </MudListItem>
+        <MudListItem>
+            <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Blue.Default};color:#fff")" Elevation="0" Outlined="true">
+                <MudText Align="Align.Center" Typo="Typo.h6">Restantes</MudText>
+            </MudPaper>
+            <MudText Align="Align.Center" Typo="Typo.h4">@TotalRestantes</MudText>
+        </MudListItem>
+        <MudListItem>
+            <MudPaper Class="mud-width-full mud-theme-default" Style="@($"background:{Colors.Green.Default};color:#fff")" Elevation="0" Outlined="true">
+                <MudText Align="Align.Center" Typo="Typo.h6">Confirmadas</MudText>
+            </MudPaper>
+            <MudText Align="Align.Center" Typo="Typo.h4">@TotalConfirmadas</MudText>
+        </MudListItem>
+        <MudListItem>
+            <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Grey.Lighten3};color:{Colors.Grey.Darken2}")" Elevation="0" Outlined="true">
+                <MudText Align="Align.Center" Typo="Typo.h6">Entregues</MudText>
+            </MudPaper>
+            <MudText Align="Align.Center" Typo="Typo.h4">@TotalEntregues</MudText>
+        </MudListItem>
+        <MudListItem>
+            <MudPaper Class="mud-width-full mud-theme-secondary" Elevation="0" Outlined="true">
+                <MudText Align="Align.Center" Typo="Typo.h6">Devolvidas</MudText>
+            </MudPaper>
+            <MudText Align="Align.Center" Typo="Typo.h4">@TotalDevolvidas</MudText>
+        </MudListItem>
+        <MudListItem>
+            <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Green.Default};color:#fff")" Elevation="0" Outlined="true">
+                <MudText Align="Align.Center" Typo="Typo.h6">Avulsas</MudText>
+            </MudPaper>
+            <MudText Align="Align.Center" Typo="Typo.h4">@TotalAvulsas</MudText>
+        </MudListItem>
+        <MudListItem>
+            <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Indigo.Darken4};color:#fff")" Elevation="0" Outlined="true">
+                <MudText Align="Align.Center" Typo="Typo.h6">Total de fichas</MudText>
+            </MudPaper>
+            <MudText Align="Align.Center" Typo="Typo.h4">@TotalFichas</MudText>
+        </MudListItem>
+    </MudList>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public int TotalFichas { get; set; }
+
+    [Parameter]
+    public int TotalDistribuidas { get; set; }
+
+    [Parameter]
+    public int TotalConfirmadas { get; set; }
+
+    [Parameter]
+    public int TotalAvulsas { get; set; }
+
+    [Parameter]
+    public int TotalEntregues { get; set; }
+
+    [Parameter]
+    public int TotalDevolvidas { get; set; }
+
+    public int TotalRestantes => TotalDistribuidas - TotalConfirmadas;
+}

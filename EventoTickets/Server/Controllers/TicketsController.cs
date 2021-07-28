@@ -36,7 +36,29 @@ namespace EventoTickets.Server.Controllers
 
             try
             {
-                retorno.Result = await _context.Tickets.Where(t => t.EventoId.Equals(idEvento)).ToListAsync();
+                var consulta = await _context.Tickets.Where(t => t.EventoId.Equals(idEvento))
+                    .Select(t => new
+                    {
+                        t.Talao.NumeroTalao,
+                        Responsavel = t.Talao.ResponsavelTalao,
+                        Ticket = t
+                    }).ToListAsync();
+
+                retorno.Result = consulta?.Select(t => new Ticket
+                {
+                    TicketId = t.Ticket.TicketId,
+                    NumeroTicket = t.Ticket.NumeroTicket,
+                    DataConfirmacao = t.Ticket.DataConfirmacao,
+                    EventoId = t.Ticket.EventoId,
+                    TalaoId = t.Ticket.TalaoId,
+                    Status = t.Ticket.Status,
+                    Talao = new Talao 
+                    { 
+                        NumeroTalao = t.NumeroTalao, 
+                        ResponsavelTalao = t.Responsavel 
+                    }
+                });
+
                 retorno.Sucesso = true;
             }
             catch (Exception ex)
@@ -162,7 +184,7 @@ namespace EventoTickets.Server.Controllers
                         ticket.Status = ticketRequest.Status;
                         ticket.DataConfirmacao = (ticketRequest.Status != StatusTicket.EmAberto ? DateTime.Now : null);
 
-                        _context.Entry(ticket).State = EntityState.Modified;
+                        //_context.Entry(ticket).State = EntityState.Modified;
                         await _context.SaveChangesAsync();
 
                         retorno.Sucesso = true;

@@ -10,6 +10,7 @@ namespace EventoTickets.Shared
     {
         EmAberto,
         Entregue,
-        Devolvido
+        Devolvido,
+        Avulso
     }
 }
