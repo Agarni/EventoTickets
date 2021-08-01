@@ -184,7 +184,18 @@ namespace EventoTickets.Server.Controllers
                         ticket.Status = ticketRequest.Status;
                         ticket.DataConfirmacao = (ticketRequest.Status != StatusTicket.EmAberto ? DateTime.Now : null);
 
-                        //_context.Entry(ticket).State = EntityState.Modified;
+                        if (ticketRequest.Status == StatusTicket.Entregue)
+                        {
+                            var talao = await _context.Taloes.Where(t => t.TalaoId.Equals(ticket.TalaoId))
+                                .Select(t => new
+                                {
+                                    t.ResponsavelTalao
+                                }).FirstAsync();
+
+                            if (talao != null && string.IsNullOrWhiteSpace(talao.ResponsavelTalao))
+                                ticket.Status = StatusTicket.Avulso;
+                        }
+
                         await _context.SaveChangesAsync();
 
                         retorno.Sucesso = true;

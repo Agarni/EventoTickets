@@ -1,7 +1,59 @@
 ﻿@page "/painel"
 
-<h3>Painel</h3>
+@using EventoTickets.Client.Components
+@using EventoTickets.Shared
+@using Microsoft.AspNetCore.SignalR.Client
+@using MudBlazor;
 
-@code {
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject ISnackbar Snackbar
 
+@if (evento == null)
+{
+    <h2>Painel</h2>
+    <MudSkeleton />
+    <MudSkeleton Animation="Animation.False" />
+    <MudSkeleton Animation="Animation.Wave" />
+}
+else if (string.IsNullOrWhiteSpace(evento?.NomeEvento))
+{
+    <h2>Painel</h2>
+    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Evento não encontrado/cadastrado</MudAlert>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="9" md="9">
+            @if (ticketsRestantes?.Count > 0)
+            {
+                <h4>Fichas restantes [ @ticketsRestantes.Count ]</h4>
+                <MudGrid>
+                    <MudItem>
+                        <MudPaper Class="d-flex flex-wrap px-2" Elevation="0">
+                            @foreach (Ticket ticket in ticketsRestantes)
+                            {
+                                <MudTooltip Text="@ticket.Talao.ResponsavelTalao">
+                                    <MudChip Class="pa-1 ma-1"
+                                 Style="@($"background:{Colors.Blue.Default};color:#fff;width:75px; text-align:center;")">
+                                        @ticket.NumeroTicket
+                                    </MudChip>
+                                </MudTooltip>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+                <br />
+                <TaloesRestantes Tickets="@tickets" />
+            }
+            else
+            {
+                <h4>Fichas restantes</h4>
+                <MudAlert Severity="Severity.Info">Todas as fichas distribuídas foram entregues</MudAlert>
+            }
+        </MudItem>
+        <MudItem xs="3" md="3">
+            <ResumoFichas ListaTickets="@tickets" />
+        </MudItem>
+    </MudGrid>
 }

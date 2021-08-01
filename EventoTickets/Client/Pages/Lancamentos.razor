@@ -32,38 +32,44 @@ else
     }
     else
     {
-        <h2>Lançamentos: @evento.NomeEvento</h2>
         <MudGrid>
             <MudItem xs="9" md="9">
                 <MudGrid>
-                    <MudItem xs="3">
-                        <MudTextField T="string" Label="Data da realização" ReadOnly="true" Variant="Variant.Outlined"
-                              Text="@evento.DataRealizacao.ToString()" />
-                    </MudItem>
                     <MudItem xs="9">
-                        <MudForm @ref="form" @bind-IsValid="@valido">
-                            <MudGrid>
-                                <MudItem xs="3">
-                                    <MudNumericField T="int" Label="Número ficha" Class="pa-2 ml-auto" OnKeyDown="TicketKeyDown"
-                                             @bind-Value="numeroTicket" Required="true" />
-                                </MudItem>
-                                <MudItem>
-                                    <br />
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" style="vertical-align:bottom;"
-                                       OnClick="@LancarTicket">Lançar</MudButton>
-                                </MudItem>
-                                <MudItem>
-                                    <br />
-                                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="align-self-center"
-                                       OnClick="@DevolverTicket">Devolver</MudButton>
-                                </MudItem>
-                                <MudItem>
-                                    <br />
-                                    <MudButton Variant="Variant.Filled" Color="Color.Error" Class="align-self-center"
-                                       OnClick="@ReabrirTicket">Reabrir</MudButton>
-                                </MudItem>
-                            </MudGrid>
-                        </MudForm>
+                        <h4>Lançamentos: @evento.NomeEvento</h4>
+                    </MudItem>
+                    <MudItem xs="12" md="12">
+                        <MudGrid>
+                            <MudItem xs="3">
+                                <MudTextField T="string" Label="Data da realização" ReadOnly="true" Variant="Variant.Outlined"
+                                      Text="@evento.DataRealizacao.ToString()" />
+                            </MudItem>
+                            <MudItem xs="9">
+                                <MudForm @ref="form" @bind-IsValid="@valido">
+                                    <MudGrid>
+                                        <MudItem xs="3">
+                                            <MudNumericField T="int" Label="Número ficha" Class="pa-2 ml-auto" OnKeyDown="TicketKeyDown"
+                                                     @bind-Value="numeroTicket" Required="true" />
+                                        </MudItem>
+                                        <MudItem>
+                                            <br />
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" style="vertical-align:bottom;"
+                                               OnClick="@LancarTicket">Lançar</MudButton>
+                                        </MudItem>
+                                        <MudItem>
+                                            <br />
+                                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="align-self-center"
+                                               OnClick="@DevolverTicket">Devolver</MudButton>
+                                        </MudItem>
+                                        <MudItem>
+                                            <br />
+                                            <MudButton Variant="Variant.Filled" Color="Color.Error" Class="align-self-center"
+                                               OnClick="@ReabrirTicket">Reabrir</MudButton>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudForm>
+                            </MudItem>
+                        </MudGrid>
                     </MudItem>
                 </MudGrid>
                 <br />
@@ -72,7 +78,8 @@ else
                         <MudPaper Class="d-flex flex-wrap px-2" Elevation="0">
                             @foreach (Ticket ticket in tickets)
                             {
-                                <MudTooltip Text="@(ticket.Status == StatusTicket.EmAberto ? "Clique para confirmar entrega" : ticket.Status.ToString())">
+                                <MudTooltip Text="@(ticket.Status == StatusTicket.EmAberto ? (string.IsNullOrWhiteSpace(ticket.Talao.ResponsavelTalao) ? 
+                                    "Clique para confirmar como avulsa" : "Clique para confirmar entrega") : ticket.Status.ToString())">
                                     <MudChip Class="pa-1 ma-1" Color="@CorTicket(ticket)" Style="width:75px; text-align:center;"
                                              OnClick="@(() => AtualizarTicket(ticket))">
                                         @ticket.NumeroTicket
@@ -84,8 +91,7 @@ else
                 </MudGrid>
             </MudItem>
             <MudItem xs="3" md="3">
-                <ResumoFichas TotalFichas="@totalFichas" TotalConfirmadas="@totalConfirmadas" TotalDistribuidas="@totalDistribuidas"
-                        TotalEntregues="@totalEntregues" TotalAvulsas="@totalAvulsas" TotalDevolvidas="@totalDevolvidas" />
+                <ResumoFichas ListaTickets="@tickets" />
             </MudItem>
         </MudGrid>
     }
