@@ -48,8 +48,16 @@ namespace EventoTickets.Client.Pages
             if (evento == null)
                 evento = new Evento();
 
-            hubConnection = new HubConnectionBuilder().WithUrl(NavigationManager.ToAbsoluteUri("/eventohub")).Build();
-            hubConnection.KeepAliveInterval = TimeSpan.FromDays(1);
+            hubConnection = new HubConnectionBuilder().WithUrl(NavigationManager.ToAbsoluteUri("/eventohub"))
+                .WithAutomaticReconnect()
+                .Build();
+
+            hubConnection.Closed += async (error) =>
+            {
+                await Task.Delay(new Random().Next(0, 5) * 1000);
+                await hubConnection.StartAsync();
+                await CarregarTickets();
+            };
 
             hubConnection.On<Ticket>("AtualizarTicketMessage", (ticket) =>
             {

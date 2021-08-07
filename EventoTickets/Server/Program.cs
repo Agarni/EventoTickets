@@ -20,7 +20,11 @@ namespace EventoTickets.Server
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    webBuilder
+                        .UseKestrel()
+                        .UseUrls("http://*:5000")
+                        .UseIIS()
+                        .UseStartup<Startup>();
                 });
     }
 }

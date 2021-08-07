@@ -45,7 +45,7 @@ else
                                       Text="@evento.DataRealizacao.ToString()" />
                             </MudItem>
                             <MudItem xs="9">
-                                <MudForm @ref="form" @bind-IsValid="@valido">
+                                <MudForm>
                                     <MudGrid>
                                         <MudItem xs="3">
                                             <MudNumericField T="int" Label="Número ficha" Class="pa-2 ml-auto" OnKeyDown="TicketKeyDown"

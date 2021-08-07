@@ -51,8 +51,17 @@ namespace EventoTickets.Client.Pages
             if (evento == null)
                 evento = new Evento();
 
-            hubConnection = new HubConnectionBuilder().WithUrl(NavigationManager.ToAbsoluteUri("/eventohub")).Build();
-            hubConnection.KeepAliveInterval = TimeSpan.FromDays(1);
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(NavigationManager.ToAbsoluteUri("/eventohub"))
+                .WithAutomaticReconnect()
+                .Build();
+
+            hubConnection.Closed += async (error) =>
+            {
+                await Task.Delay(new Random().Next(0, 5) * 1000);
+                await hubConnection.StartAsync();
+                await CarregarTickets();
+            };
 
             hubConnection.On<Ticket>("AtualizarTicketMessage", (ticket) =>
             {
@@ -75,24 +84,6 @@ namespace EventoTickets.Client.Pages
             {
                 CallCarregarTickets();
             });
-
-            // Verifica a cada 5 minutos que a conexão com SignalR não foi fechada
-            timer = new System.Threading.Timer(async (object stateInfo) =>
-            {
-                if (!IsConnected)
-                {
-                    try
-                    {
-                        Snackbar.Add($"Erro ao reconectar SignalR: {hubConnection.State}", Severity.Warning);
-                        await hubConnection.StartAsync();
-                        await CarregarTickets();
-                    }
-                    catch (Exception ex)
-                    {
-                        Snackbar.Add($"Erro ao reconectar SignalR: {ex.Message}", Severity.Error);
-                    }
-                }
-            }, new System.Threading.AutoResetEvent(false), 300000, 300000);
 
             await hubConnection.StartAsync();
             await CarregarTickets();

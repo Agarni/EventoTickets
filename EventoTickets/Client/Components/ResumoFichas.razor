@@ -55,7 +55,7 @@
     public int TotalAvulsas { get; set; }
     public int TotalEntregues { get; set; }
     public int TotalDevolvidas { get; set; }
-    public int TotalRestantes => TotalDistribuidas - TotalConfirmadas;
+    public int TotalRestantes => TotalDistribuidas - TotalEntregues;
 
     [Parameter]
     public EventCallback<List<Ticket>> OnAtualizarTickets { get; set; }
