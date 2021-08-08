@@ -92,10 +92,15 @@ namespace EventoTickets.Server.Controllers
         public async Task<ActionResult<Evento>> PostEvento(Evento evento)
         {
             evento.EventoId = Guid.NewGuid().ToString();
-            _context.Eventos.Add(evento);
 
             try
             {
+                var eventoPadrao = await _context.Eventos.FirstOrDefaultAsync(x => x.EventoPadrao && x.DataRealizacao >= DateTime.Now);
+
+                if (eventoPadrao == null)
+                    evento.EventoPadrao = true;
+
+                _context.Eventos.Add(evento);
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateException)

@@ -1,17 +1,59 @@
 ﻿@page "/"
 
-<h1>Manutenção de eventos</h1>
+@using MudBlazor;
 
-@saudacao
-<br /><br />
-Ferramenta desenvolvida para controle de fichas, utilizando talonário e confirmação de entrega/devolução de fichas.
-<br /><br />
+<style>
+    body {
+        background-image: url("imagens/130907-blue-polygon-pattern-background.jpg");
+        background-color: @Colors.Indigo.Lighten4;
+    }
 
-<div>
-    Desenvolvida por: <a href="mailto:sergio_luiz@outlook.com">Sergio Luiz</a>
+    .divEvento {
+        display: inline-block;
+        position: relative;
+        padding: 1px 8px;
+        background: @Colors.Indigo.Default;
+        color: #fff;
+    }
+
+    .divInfo {
+        background-color: rgba(0, 0, 255, 0.1);
+        margin-left: 5%;
+        margin-right: 5%;
+        margin-bottom: 40px;
+        text-align: center;
+        padding: 20px;
+        font-size: 18px;
+    }
+</style>
+
+<div style="margin-top: 20px; margin-bottom:30px">
+    <table>
+        <tr>
+            <td>
+                <img src="imagens/ticket-icon.png" style="width:200px;margin-left:25px;margin-right:50px;" />
+            </td>
+            <td>
+                <div>
+                    <MudText Typo="@Typo.h3">Manutenção de</MudText>
+                </div>
+                <div>
+                    <MudText Typo="@Typo.h3">Eventos por talonário</MudText>
+                </div>
+            </td>
+        </tr>
+    </table>
 </div>
 
-@code{
+<div class="divInfo">
+    Ferramenta desenvolvida para controle de eventos através de talonário e confirmação de entrega/devolução de fichas.
+</div>
+
+<div style="text-align:center;padding:20px;background-color: rgba(248, 248, 248, 0.5);">
+    <strong>Desenvolvida por:</strong> <a href="mailto:sergio_luiz@outlook.com">Sergio Luiz (sergio_luiz@outlook.com)</a>
+</div>
+
+@code {
     int hora = int.Parse(DateTime.Now.ToString("HH"));
     string saudacao;
 

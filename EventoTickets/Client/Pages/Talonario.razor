@@ -19,10 +19,10 @@
 }
 else
 {
-    if (string.IsNullOrWhiteSpace(evento.NomeEvento))
+    if (string.IsNullOrWhiteSpace(evento?.EventoId))
     {
         <h3>Talonário</h3>
-        <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Evento não encontrado</MudAlert>
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">Evento não encontrado/cadastrado</MudAlert>
     }
     else
     {

@@ -117,6 +117,9 @@ namespace EventoTickets.Client.Pages
         {
             try
             {
+                if (Id == null)
+                    return;
+
                 var retornoTickets = await Http.GetFromJsonAsync<RetornoAcao<IEnumerable<Ticket>>>("api/tickets/CarregarTickets/" + Id);
                 if (retornoTickets.Sucesso)
                 {

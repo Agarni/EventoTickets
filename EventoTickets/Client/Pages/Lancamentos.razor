@@ -16,10 +16,10 @@
     <MudSkeleton Animation="Animation.False" />
     <MudSkeleton Animation="Animation.Wave" />
 }
-else if (string.IsNullOrWhiteSpace(evento?.NomeEvento))
+else if (string.IsNullOrWhiteSpace(evento?.EventoId))
 {
     <h2>Lançamentos</h2>
-    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Evento não encontrado/cadastrado</MudAlert>
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">Evento não encontrado/cadastrado ou não definido como padrão</MudAlert>
 }
 else
 {
@@ -29,6 +29,11 @@ else
         <MudSkeleton />
         <MudSkeleton Animation="Animation.False" />
         <MudSkeleton Animation="Animation.Wave" />
+    }
+    else if (tickets.Count == 0)
+    {
+        <h4>Lançamentos</h4>
+        <MudAlert Severity="Severity.Info">Fichas ainda não foram geradas</MudAlert>
     }
     else
     {
@@ -78,10 +83,10 @@ else
                         <MudPaper Class="d-flex flex-wrap px-2" Elevation="0">
                             @foreach (Ticket ticket in tickets)
                             {
-                                <MudTooltip Text="@(ticket.Status == StatusTicket.EmAberto ? (string.IsNullOrWhiteSpace(ticket.Talao.ResponsavelTalao) ? 
+                                <MudTooltip Text="@(ticket.Status == StatusTicket.EmAberto ? (string.IsNullOrWhiteSpace(ticket.Talao.ResponsavelTalao) ?
                                     "Clique para confirmar como avulsa" : "Clique para confirmar entrega") : ticket.Status.ToString())">
                                     <MudChip Class="pa-1 ma-1" Color="@CorTicket(ticket)" Style="width:75px; text-align:center;"
-                                             OnClick="@(() => AtualizarTicket(ticket))">
+                                 OnClick="@(() => AtualizarTicket(ticket))">
                                         @ticket.NumeroTicket
                                     </MudChip>
                                 </MudTooltip>

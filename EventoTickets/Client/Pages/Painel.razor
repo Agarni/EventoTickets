@@ -16,10 +16,10 @@
     <MudSkeleton Animation="Animation.False" />
     <MudSkeleton Animation="Animation.Wave" />
 }
-else if (string.IsNullOrWhiteSpace(evento?.NomeEvento))
+else if (string.IsNullOrWhiteSpace(evento?.EventoId))
 {
     <h2>Painel</h2>
-    <MudAlert Severity="Severity.Error" Variant="Variant.Filled">Evento não encontrado/cadastrado</MudAlert>
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">Evento não encontrado/cadastrado ou não definido como padrão</MudAlert>
 }
 else
 {
@@ -48,8 +48,16 @@ else
             }
             else
             {
-                <h4>Fichas restantes</h4>
-                <MudAlert Severity="Severity.Info">Todas as fichas distribuídas foram entregues</MudAlert>
+                @if (tickets?.Count > 0)
+                {
+                    <h4>Fichas restantes</h4>
+                    <MudAlert Severity="Severity.Info">Todas as fichas distribuídas foram entregues</MudAlert>
+                }
+                else
+                {
+                    <h4>Painel</h4>
+                    <MudAlert Severity="Severity.Info">Fichas ainda não foram geradas</MudAlert>
+                }
             }
         </MudItem>
         <MudItem xs="3" md="3">
