@@ -27,13 +27,10 @@ namespace EventoTickets.Client.Pages
         public string Id { get; set; }
 
         #region Variáveis globais
-        private bool valido;
-        private MudForm form;
         private List<Ticket> tickets;
         private Evento evento;
         private HubConnection hubConnection;
         private int numeroTicket;
-        private System.Threading.Timer timer;
         #endregion Variáveis globais
 
         protected override async Task OnInitializedAsync()
@@ -126,7 +123,7 @@ namespace EventoTickets.Client.Pages
             }
         }
 
-        private Color CorTicket(Ticket ticket)
+        private static Color CorTicket(Ticket ticket)
         {
             var cor = ticket.Status switch
             {
@@ -142,14 +139,11 @@ namespace EventoTickets.Client.Pages
             return cor;
         }
 
-        public void TicketKeyDown(KeyboardEventArgs e)
+        public async void TicketKeyDown(KeyboardEventArgs args)
         {
-            if (e.Code == "Enter" || e.Code == "NumpadEnter")
+            if (args.Code == "Enter" || args.Code == "NumpadEnter")
             {
-                Task.Run(async () =>
-                {
-                    await LancarTicket();
-                });
+                await LancarTicket();
             }
         }
 

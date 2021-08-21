@@ -5,15 +5,6 @@
 <style>
     body {
         background-image: url("imagens/130907-blue-polygon-pattern-background.jpg");
-        background-color: @Colors.Indigo.Lighten4;
-    }
-
-    .divEvento {
-        display: inline-block;
-        position: relative;
-        padding: 1px 8px;
-        background: @Colors.Indigo.Default;
-        color: #fff;
     }
 
     .divInfo {
@@ -54,22 +45,5 @@
 </div>
 
 @code {
-    int hora = int.Parse(DateTime.Now.ToString("HH"));
-    string saudacao;
-
-    protected override void OnInitialized()
-    {
-        if (hora > 18)
-        {
-            saudacao = "Boa noite!";
-        }
-        else if (hora >= 12)
-        {
-            saudacao = "Boa tarde!";
-        }
-        else
-        {
-            saudacao = "Bom dia!";
-        }
-    }
+    
 }

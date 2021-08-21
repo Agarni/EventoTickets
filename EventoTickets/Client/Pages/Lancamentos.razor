@@ -53,12 +53,12 @@ else
                                 <MudForm>
                                     <MudGrid>
                                         <MudItem xs="3">
-                                            <MudNumericField T="int" Label="Número ficha" Class="pa-2 ml-auto" OnKeyDown="TicketKeyDown"
+                                            <MudNumericField T="int" Label="Número ficha" Class="pa-2 ml-auto" autocomplete="off" OnKeyUp="TicketKeyDown"
                                                      @bind-Value="numeroTicket" Required="true" />
                                         </MudItem>
                                         <MudItem>
                                             <br />
-                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" style="vertical-align:bottom;"
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" style="vertical-align:bottom;" 
                                                OnClick="@LancarTicket">Lançar</MudButton>
                                         </MudItem>
                                         <MudItem>

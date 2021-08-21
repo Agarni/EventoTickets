@@ -47,7 +47,7 @@ namespace EventoTickets.Server.Controllers
         [Route("[action]")]
         public async Task<ActionResult<Evento>> GetEventoPadrao()
         {
-            var evento = await _context.Eventos.FirstOrDefaultAsync(x => x.EventoPadrao && x.DataRealizacao >= DateTime.Now);
+            var evento = await _context.Eventos.FirstOrDefaultAsync(x => x.EventoPadrao);
 
             if (evento == null)
                 evento = new Evento { NomeEvento = "Manutenção de eventos" };
