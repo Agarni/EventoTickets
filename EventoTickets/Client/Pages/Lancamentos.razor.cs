@@ -123,18 +123,18 @@ namespace EventoTickets.Client.Pages
             }
         }
 
-        private static Color CorTicket(Ticket ticket)
+        private static string CorTicket(Ticket ticket)
         {
             var cor = ticket.Status switch
             {
-                StatusTicket.Entregue => Color.Default,
-                StatusTicket.Devolvido => Color.Secondary,
-                StatusTicket.Avulso => Color.Success,
-                _ => Color.Info
+                StatusTicket.Entregue => Colors.Grey.Lighten2, //Color.Default,
+                StatusTicket.Devolvido => Colors.Purple.Accent3 + ";color:#fff", //Color.Secondary,
+                StatusTicket.Avulso => Colors.Green.Default + ";color:#fff", //Color.Success,
+                _ => Colors.Blue.Default + ";color:#fff" //Color.Info
             };
 
             if (!string.IsNullOrWhiteSpace(ticket.Talao.ResponsavelTalao) && ticket.Status == StatusTicket.EmAberto)
-                cor = Color.Primary;
+                cor = Colors.Indigo.Default + ";color:#fff"; // Color.Primary;
 
             return cor;
         }
