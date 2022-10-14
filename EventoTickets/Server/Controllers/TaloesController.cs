@@ -94,8 +94,10 @@ namespace EventoTickets.Server.Controllers
                     }
                 });
 
-                _context.BulkInsert(novosTaloes);
-                _context.BulkInsert(novosTickets);
+                _context.Taloes.AddRange(novosTaloes);
+                _context.Tickets.AddRange(novosTickets);
+
+                _ = await _context.SaveChangesAsync();
 
                 retorno.Sucesso = true;
             }

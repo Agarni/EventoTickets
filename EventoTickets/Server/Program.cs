@@ -22,7 +22,7 @@ namespace EventoTickets.Server
                 {
                     webBuilder
                         .UseKestrel()
-                        .UseUrls("http://*:5000")
+                        //.UseUrls("http://*:5000")
                         .UseIIS()
                         .UseStartup<Startup>();
                 });

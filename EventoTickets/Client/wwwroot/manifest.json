@@ -1,6 +1,6 @@
 {
-  "name": "EventoTickets",
-  "short_name": "EventoTickets",
+  "name": "Manutenção de eventos por talonário",
+  "short_name": "Eventos por talonário",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",

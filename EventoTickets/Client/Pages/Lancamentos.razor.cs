@@ -3,16 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using System.Net.Http;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Microsoft.JSInterop;
-using EventoTickets.Client;
-using EventoTickets.Client.Shared;
 using EventoTickets.Shared;
 using Microsoft.AspNetCore.SignalR.Client;
 using MudBlazor;
@@ -30,7 +22,17 @@ namespace EventoTickets.Client.Pages
         private List<Ticket> tickets;
         private Evento evento;
         private HubConnection hubConnection;
-        private int numeroTicket;
+        private int numeroTicket
+        {
+            get => lancamento.FichaInicial;
+            set
+            {
+                lancamento.FichaInicial = value;
+                lancamento.FichaFinal = value;
+            }
+        }
+        private MudNumericField<int> fichaLancada;
+        private LancamentoFicha lancamento = new();
         #endregion Variáveis globais
 
         protected override async Task OnInitializedAsync()
@@ -84,6 +86,7 @@ namespace EventoTickets.Client.Pages
 
             await hubConnection.StartAsync();
             await CarregarTickets();
+            await fichaLancada.FocusAsync();
         }
 
         private void CallCarregarTickets()
@@ -157,7 +160,18 @@ namespace EventoTickets.Client.Pages
 
         private async Task LancarTicket()
         {
-            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(numeroTicket) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
+            var ticket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId));
+            
+            if (ticket == null)
+            {
+                Snackbar.Add($"Informe um nº da ficha inicial entre {tickets.Min(x => x.NumeroTicket)} e {tickets.Max(x => x.NumeroTicket)}",
+                    Severity.Warning);
+                await fichaLancada.FocusAsync();
+                return;
+            }
+
+            var listaTickets = ListaIdsTickets();
+            var idTicket = ticket.TicketId;
             await AtualizarTicket(idTicket, StatusTicket.Entregue);
         }
 
@@ -166,6 +180,7 @@ namespace EventoTickets.Client.Pages
             if (idTicket <= 0)
             {
                 Snackbar.Add("Informe o nº da ficha", Severity.Warning);
+                await fichaLancada.FocusAsync();
                 return;
             }
 
@@ -208,21 +223,55 @@ namespace EventoTickets.Client.Pages
                         }
                     }
 
-                    numeroTicket = 0;
+                    lancamento.FichaInicial = 0;
+                    lancamento.FichaFinal = 0;
                 }
             }
+
+            await fichaLancada.FocusAsync();
+        }
+
+        private void NumeroFicha_Changed(string valor)
+        {
+            if (!int.TryParse(valor, out int numeroFicha)) 
+                return;
+
+            lancamento.FichaFinal = numeroFicha;
         }
 
         private async void DevolverTicket()
         {
-            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(numeroTicket) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
+            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
             await AtualizarTicket(idTicket, StatusTicket.Devolvido);
         }
 
         private async void ReabrirTicket()
         {
-            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(numeroTicket) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
+            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
             await AtualizarTicket(idTicket, StatusTicket.EmAberto);
+        }
+
+        private List<int> ListaIdsTickets(StatusTicket statusTicket = StatusTicket.Entregue)
+        {
+            if (lancamento.FichaFinal <= lancamento.FichaInicial)
+                return new() { lancamento.FichaInicial, lancamento.FichaFinal };
+
+            var lst = tickets.Where(x => x.NumeroTicket >= lancamento.FichaInicial && x.NumeroTicket <= lancamento.FichaFinal)
+                .ToList();
+
+            // Considera somente os tickets em aberto quando entregar ou devolver
+            if (statusTicket is StatusTicket.Entregue or StatusTicket.Devolvido)
+            {
+                lst = lst.Where(x => x.Status == StatusTicket.EmAberto).ToList();
+            }
+
+            return lst.Select(x => x.TicketId).ToList();
+        }
+
+        private class LancamentoFicha
+        {
+            public int FichaInicial { get; set; }
+            public int FichaFinal { get; set; }
         }
     }
 }

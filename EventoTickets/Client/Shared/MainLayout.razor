@@ -5,19 +5,32 @@
 
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
+@inject IJSRuntime JSRuntime
 
 <MudThemeProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <MudLayout>
+    <MudDrawer @bind-Open="@_drawerOpen" Style="top:-5px" Width="250px">
+        <NavMenu />
+    </MudDrawer>
     <MudAppBar>
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         @evento.NomeEvento
     </MudAppBar>
-    <MudDrawer @bind-Open="@_drawerOpen">
-        <NavMenu />
-    </MudDrawer>
+
+    @if (Installable)
+    {
+        <div class="row justify-content-center">
+            <div class="install-prompt col-sm-8 col-sm-offset-2 col-lg-6 col-lg-offset-3">
+                <span>Install app?</span>
+                <button class="installButton btn btn-primary" @onclick="@(() => InstallClicked())">Sim</button>
+                <button class="cancelButton btn btn-danger" @onclick="@(()=>Installable=false)">Não</button>
+            </div>
+        </div>
+    }
+
     <MudMainContent>
         @Body
     </MudMainContent>
@@ -28,6 +41,9 @@
     Evento evento = new Evento { NomeEvento = "Eventos" };
 
     private HubConnection hubConnection;
+
+    static bool Installable = false;
+    static Action OnInstallable;
 
     protected override async Task OnInitializedAsync()
     {
@@ -67,5 +83,24 @@
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
+    }
+
+    protected override void OnInitialized()
+    {
+        OnInstallable = () => InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public static Task PWAInstallable()
+    {
+        Installable = true;
+        OnInstallable.Invoke();
+        return Task.CompletedTask;
+    }
+
+    ValueTask InstallClicked()
+    {
+        Installable = false;
+        return JSRuntime.InvokeVoidAsync("BlazorPWA.installPWA");
     }
 }

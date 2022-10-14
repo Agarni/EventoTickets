@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EventoTickets.Server.Data;
 using EventoTickets.Shared;
-using Z.BulkOperations;
+//using Z.BulkOperations;
 
 namespace EventoTickets.Server.Controllers
 {
@@ -97,11 +97,13 @@ namespace EventoTickets.Server.Controllers
             {
                 var eventoPadrao = await _context.Eventos.FirstOrDefaultAsync(x => x.EventoPadrao && x.DataRealizacao >= DateTime.Now);
 
-                if (eventoPadrao == null)
-                    evento.EventoPadrao = true;
-
                 _context.Eventos.Add(evento);
                 await _context.SaveChangesAsync();
+
+                if (eventoPadrao == null)
+                {
+                    _ = await DefinirEventoPadrao(evento);
+                }
             }
             catch (DbUpdateException)
             {
@@ -147,7 +149,15 @@ namespace EventoTickets.Server.Controllers
 
             if (evento != null)
             {
-                await _context.BulkUpdateAsync(eventos);
+                try
+                {
+                    _context.Eventos.UpdateRange(eventos.ToArray());
+                    _ = await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    return Problem("Erro ao definir evento padrão: " + ex.Message);
+                }
             }
 
             return Ok();

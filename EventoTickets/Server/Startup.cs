@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using EventoTickets.Server.Data;
+using System.IO;
 
 namespace EventoTickets.Server
 {
@@ -33,6 +34,14 @@ namespace EventoTickets.Server
                 opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
                     new[] { "application/octet-stream" });
             });
+
+            var localDB = Path.GetDirectoryName(Configuration.GetConnectionString("EventoDbContext")
+                .Replace("Filename=", ""));
+
+            if (!Directory.Exists(localDB))
+            {
+                _ = Directory.CreateDirectory(localDB);
+            }
 
             services.AddDbContext<EventoDbContext>(options =>
                     options.UseSqlite(Configuration.GetConnectionString("EventoDbContext")));

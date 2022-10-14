@@ -10,130 +10,117 @@
 @inject ISnackbar Snackbar
 
 <style>
-	.tooltip{
-
+	.tooltip {
 	}
 
-	.tooltip .tooltiptext {
-	  visibility: hidden;
-	  width: 120px;
-	  background-color: black;
-	  color: #fff;
-	  text-align: center;
-	  border-radius: 6px;
-	  padding: 5px 0;
-	  position: absolute;
-	  z-index: 1;
-	  bottom: 150%;
-	  left: 50%;
-	  margin-left: -60px;
-	}
+		.tooltip .tooltiptext {
+			visibility: hidden;
+			width: 120px;
+			background-color: black;
+			color: #fff;
+			text-align: center;
+			border-radius: 6px;
+			padding: 5px 0;
+			position: absolute;
+			z-index: 1;
+			bottom: 150%;
+			left: 50%;
+			margin-left: -60px;
+		}
 
-	.tooltip .tooltiptext::after {
-	  content: "";
-	  position: absolute;
-	  top: 100%;
-	  left: 50%;
-	  margin-left: -5px;
-	  border-width: 5px;
-	  border-style: solid;
-	  border-color: black transparent transparent transparent;
-	}
+			.tooltip .tooltiptext::after {
+				content: "";
+				position: absolute;
+				top: 100%;
+				left: 50%;
+				margin-left: -5px;
+				border-width: 5px;
+				border-style: solid;
+				border-color: black transparent transparent transparent;
+			}
 
-	.tooltip:hover .tooltiptext {
-	  visibility: visible;
-	}
+		.tooltip:hover .tooltiptext {
+			visibility: visible;
+		}
 </style>
+
+<h2>Lançamentos</h2>
+<br />
 
 @if (evento == null)
 {
-	<h2>Lançamentos</h2>
 	<MudSkeleton />
 	<MudSkeleton Animation="Animation.False" />
 	<MudSkeleton Animation="Animation.Wave" />
 }
 else if (string.IsNullOrWhiteSpace(evento?.EventoId))
 {
-	<h2>Lançamentos</h2>
 	<MudAlert Severity="Severity.Warning" Variant="Variant.Filled">Evento não encontrado/cadastrado ou não definido como padrão</MudAlert>
 }
 else
 {
 	if (tickets == null)
 	{
-		<h2>Lançamentos</h2>
 		<MudSkeleton />
 		<MudSkeleton Animation="Animation.False" />
 		<MudSkeleton Animation="Animation.Wave" />
 	}
 	else if (tickets.Count == 0)
 	{
-		<h4>Lançamentos</h4>
 		<MudAlert Severity="Severity.Info">Fichas ainda não foram geradas</MudAlert>
 	}
 	else
 	{
-		<MudGrid>
-			<MudItem xs="9" md="9">
-				<MudGrid>
-					<MudItem xs="9">
-						<h4>Lançamentos: @evento.NomeEvento</h4>
-					</MudItem>
-					<MudItem xs="12" md="12">
-						<MudGrid>
-							<MudItem xs="3">
-								<MudTextField T="string" Label="Data da realização" ReadOnly="true" Variant="Variant.Outlined"
-									  Text="@evento.DataRealizacao.ToString()" />
-							</MudItem>
-							<MudItem xs="9">
-								<MudForm>
-									<MudGrid>
-										<MudItem xs="3">
-											<MudNumericField T="int" Label="Número ficha" Class="pa-2 ml-auto" OnKeyUp="TicketKeyDown"
-													 @bind-Value="numeroTicket" Required="true" />
-										</MudItem>
-										<MudItem>
-											<br />
-											<MudButton Variant="Variant.Filled" Color="Color.Primary" style="vertical-align:bottom;"
-											   OnClick="@LancarTicket">Lançar</MudButton>
-										</MudItem>
-										<MudItem>
-											<br />
-											<MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="align-self-center"
-											   OnClick="@DevolverTicket">Devolver</MudButton>
-										</MudItem>
-										<MudItem>
-											<br />
-											<MudButton Variant="Variant.Filled" Color="Color.Error" Class="align-self-center"
-											   OnClick="@ReabrirTicket">Reabrir</MudButton>
-										</MudItem>
-									</MudGrid>
-								</MudForm>
-							</MudItem>
-						</MudGrid>
-					</MudItem>
-				</MudGrid>
-				<br />
-				<MudGrid>
-					<MudItem>
-						<MudPaper Class="d-flex flex-wrap px-2" Elevation="0">
-							@foreach (Ticket ticket in tickets.Where(x => x.Status != StatusTicket.Entregue && 
+		<section class="containerLanctos">
+			<div class="item" id="fichas">
+				<div>
+					<div>
+						<MudTextField T="string" Label="Data da realização" ReadOnly="true" Variant="Variant.Outlined"
+							  Text="@evento.DataRealizacao.ToString()" Style="width:200px;" />
+					</div>
+					<div>
+						<EditForm Model="@lancamento">
+							<div class="lancamentos">
+								<div class="numeroFicha">
+									<MudNumericField @ref="fichaLancada" T="int" Label="Ficha inicial" Style="max-width:150px;"
+											 @bind-Value="numeroTicket" Required="true" DebounceInterval="500" />
+								</div>
+								<div class="numeroFicha">
+									<MudNumericField T="int" Label="Ficha final" Style="max-width:150px;"
+											 @bind-Value="lancamento.FichaFinal" />
+								</div>
+								<div>
+									<MudButtonGroup OverrideStyles="false" Style="bottom:0;">
+										<MudButton Variant="Variant.Filled" Color="Color.Primary" style="vertical-align:bottom;" ButtonType="ButtonType.Submit"
+										   OnClick="@LancarTicket">Lançar</MudButton>
+										<MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="align-self-center"
+										   OnClick="@DevolverTicket">Devolver</MudButton>
+										<MudButton Variant="Variant.Filled" Color="Color.Error" Class="align-self-center"
+										   OnClick="@ReabrirTicket">Reabrir</MudButton>
+									</MudButtonGroup>
+								</div>
+							</div>
+						</EditForm>
+					</div>
+					<div class="fichas">
+						@foreach (Ticket ticket in tickets.Where(x => x.Status != StatusTicket.Entregue &&
 								x.Status != StatusTicket.Avulso).ToList())
-							{
-								<MudTooltip Text="@(ticket.Talao?.ResponsavelTalao)">
-									<MudPaper Elevation="0" Outlined="true"
-											  Style="@($"background-color:{@CorTicket(ticket)};padding:2px;min-width:45px;margin:2px;text-align:center")">
-										@ticket.NumeroTicket
-									</MudPaper>
-								</MudTooltip>
-							}
-						</MudPaper>
-					</MudItem>
-				</MudGrid>
-			</MudItem>
-			<MudItem xs="3" md="3">
-				<ResumoFichas ListaTickets="@tickets" />
-			</MudItem>
-		</MudGrid>
+						{
+							<MudTooltip Text="@(ticket.Talao?.ResponsavelTalao)">
+								<MudPaper Elevation="0" Outlined="true"
+							  Style="@($"background-color:{@CorTicket(ticket)};padding:2px;min-width:45px;margin:2px;text-align:center;cursor:pointer")">
+									@ticket.NumeroTicket
+								</MudPaper>
+							</MudTooltip>
+						}
+					</div>
+				</div>
+			</div>
+			<div class="item" id="painel">
+				<div id="resumo">
+					<ResumoFichas ListaTickets="@tickets" />
+				</div>
+			</div>
+		</section>
 	}
 }

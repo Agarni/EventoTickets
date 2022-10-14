@@ -1,7 +1,7 @@
 ﻿@using EventoTickets.Shared
 @using MudBlazor
 
-<MudPaper Outlined="true" Square="true" Style="margin-right:20px">
+<MudPaper Outlined="true" Square="true">
     <MudList DisablePadding="true">
         <MudListItem>
             <MudPaper Class="mud-width-full mud-theme-primary" Elevation="0" Outlined="true">
@@ -55,7 +55,7 @@
     public int TotalAvulsas { get; set; }
     public int TotalEntregues { get; set; }
     public int TotalDevolvidas { get; set; }
-    public int TotalRestantes => TotalDistribuidas - TotalEntregues;
+    public int TotalRestantes => TotalDistribuidas - TotalEntregues - TotalDevolvidas;
 
     [Parameter]
     public EventCallback<List<Ticket>> OnAtualizarTickets { get; set; }
