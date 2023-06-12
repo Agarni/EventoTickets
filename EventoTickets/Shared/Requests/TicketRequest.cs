@@ -8,7 +8,7 @@ namespace EventoTickets.Shared.Requests
 {
     public class TicketRequest
     {
-        public int TicketId { get; set; }
+        public int[] TicketsIds { get; set; }
         public StatusTicket Status { get; set; }
     }
 }

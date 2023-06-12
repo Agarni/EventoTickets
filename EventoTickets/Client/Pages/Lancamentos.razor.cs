@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using MudBlazor;
 using System.Net.Sockets;
 using EventoTickets.Shared.Requests;
+using System.Diagnostics;
 
 namespace EventoTickets.Client.Pages
 {
@@ -28,7 +29,7 @@ namespace EventoTickets.Client.Pages
             set
             {
                 lancamento.FichaInicial = value;
-                lancamento.FichaFinal = value;
+                lancamento.FichaFinal = lancamento.FichaFinal == 0 || value > lancamento.FichaFinal ? value : lancamento.FichaFinal;
             }
         }
         private MudNumericField<int> fichaLancada;
@@ -150,14 +151,6 @@ namespace EventoTickets.Client.Pages
             }
         }
 
-        private async Task AtualizarTicket(Ticket ticket)
-        {
-            if (ticket.Status == StatusTicket.Entregue || ticket.Status == StatusTicket.Devolvido)
-                return;
-
-            await AtualizarTicket(ticket.TicketId, StatusTicket.Entregue);
-        }
-
         private async Task LancarTicket()
         {
             var ticket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId));
@@ -171,13 +164,13 @@ namespace EventoTickets.Client.Pages
             }
 
             var listaTickets = ListaIdsTickets();
-            var idTicket = ticket.TicketId;
-            await AtualizarTicket(idTicket, StatusTicket.Entregue);
+            //var idTicket = ticket.TicketId;
+            await AtualizarTicket(listaTickets.ToArray(), StatusTicket.Entregue);
         }
 
-        private async Task AtualizarTicket(int idTicket, StatusTicket statusTicket)
+        private async Task AtualizarTicket(int[] idsTickets, StatusTicket statusTicket)
         {
-            if (idTicket <= 0)
+            if (idsTickets.Length == 0)
             {
                 Snackbar.Add("Informe o nº da ficha", Severity.Warning);
                 await fichaLancada.FocusAsync();
@@ -186,14 +179,14 @@ namespace EventoTickets.Client.Pages
 
             var ticketRequest = new TicketRequest
             {
-                TicketId = idTicket,
+                TicketsIds = idsTickets,
                 Status = statusTicket
             };
             var response = await Http.PostAsJsonAsync("api/tickets/AtualizarTicket/", ticketRequest);
 
             if (response.IsSuccessStatusCode)
             {
-                var retorno = await response.Content.ReadFromJsonAsync<RetornoAcao<Ticket>>();
+                var retorno = await response.Content.ReadFromJsonAsync<RetornoAcao<List<RetornoAcao<Ticket>>>>();
 
                 if (!retorno.Sucesso)
                 {
@@ -208,18 +201,30 @@ namespace EventoTickets.Client.Pages
                 }
                 else
                 {
-                    if (IsConnected)
+                    foreach(var retornoTicket in retorno.Result)
                     {
-                        await SendMessage(retorno.Result);
-                    }
-                    else
-                    {
-                        var ticketConsulta = tickets?.FirstOrDefault(x => x.TicketId == idTicket);
-
-                        if (ticketConsulta != null)
+                        Debug.WriteLine(retornoTicket);
+                        if (!retornoTicket.Sucesso)
                         {
-                            ticketConsulta.Status = retorno.Result.Status;
-                            ticketConsulta.DataConfirmacao = retorno.Result.DataConfirmacao;
+                            Snackbar.Add($"Erro ao atualizar ficha {retornoTicket.Result.NumeroTicket}: {retornoTicket.MensagemErro}", 
+                                Severity.Error);
+                            continue;
+                        }
+
+                        if (IsConnected)
+                        {
+                            await SendMessage(retornoTicket.Result);
+                        }
+                        else
+                        {
+                            var ticketConsulta = tickets?.FirstOrDefault(x => x.TicketId == retornoTicket.Result.TicketId);
+
+                            if (ticketConsulta != null)
+                            {
+                                ticketConsulta.Status = retornoTicket.Result.Status;
+                                ticketConsulta.DataConfirmacao = retornoTicket.Result.DataConfirmacao;
+                                StateHasChanged();
+                            }
                         }
                     }
 
@@ -241,20 +246,20 @@ namespace EventoTickets.Client.Pages
 
         private async void DevolverTicket()
         {
-            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
-            await AtualizarTicket(idTicket, StatusTicket.Devolvido);
+            //var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
+            await AtualizarTicket(ListaIdsTickets(StatusTicket.Devolvido)?.ToArray(), StatusTicket.Devolvido);
         }
 
         private async void ReabrirTicket()
         {
-            var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
-            await AtualizarTicket(idTicket, StatusTicket.EmAberto);
+            //var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
+            await AtualizarTicket(ListaIdsTickets(StatusTicket.EmAberto)?.ToArray(), StatusTicket.EmAberto);
         }
 
         private List<int> ListaIdsTickets(StatusTicket statusTicket = StatusTicket.Entregue)
         {
-            if (lancamento.FichaFinal <= lancamento.FichaInicial)
-                return new() { lancamento.FichaInicial, lancamento.FichaFinal };
+            //if (lancamento.FichaFinal <= lancamento.FichaInicial)
+            //    return new() { lancamento.FichaInicial, lancamento.FichaFinal };
 
             var lst = tickets.Where(x => x.NumeroTicket >= lancamento.FichaInicial && x.NumeroTicket <= lancamento.FichaFinal)
                 .ToList();

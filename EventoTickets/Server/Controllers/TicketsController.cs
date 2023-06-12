@@ -26,7 +26,7 @@ namespace EventoTickets.Server.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Ticket>>> GetTickets()
         {
-            return await _context.Tickets.ToListAsync();
+            return await _context.Tickets.AsNoTracking().ToListAsync();
         }
 
         [HttpGet("CarregarTickets/{idEvento}")]
@@ -37,6 +37,7 @@ namespace EventoTickets.Server.Controllers
             try
             {
                 var consulta = await _context.Tickets.Where(t => t.EventoId.Equals(idEvento))
+                    .AsNoTracking()
                     .Select(t => new
                     {
                         t.Talao.NumeroTalao,
@@ -52,10 +53,10 @@ namespace EventoTickets.Server.Controllers
                     EventoId = t.Ticket.EventoId,
                     TalaoId = t.Ticket.TalaoId,
                     Status = t.Ticket.Status,
-                    Talao = new Talao 
-                    { 
-                        NumeroTalao = t.NumeroTalao, 
-                        ResponsavelTalao = t.Responsavel 
+                    Talao = new Talao
+                    {
+                        NumeroTalao = t.NumeroTalao,
+                        ResponsavelTalao = t.Responsavel
                     }
                 });
 
@@ -159,24 +160,25 @@ namespace EventoTickets.Server.Controllers
 
         [HttpPost("{ticketRequest}")]
         [Route("[action]")]
-        public async Task<ActionResult<RetornoAcao<Ticket>>> AtualizarTicket([FromBody] TicketRequest ticketRequest)
+        public async Task<ActionResult<RetornoAcao<List<RetornoAcao<Ticket>>>>> AtualizarTicket([FromBody] TicketRequest ticketRequest)
         {
-            var retorno = new RetornoAcao<Ticket>();
+            var retorno = new RetornoAcao<List<RetornoAcao<Ticket>>>
+            {
+                Result = new()
+            };
 
             try
             {
-                var ticket = await _context.Tickets.FindAsync(ticketRequest.TicketId);
+                await foreach (var ticket in _context.Tickets.Where(t => ticketRequest.TicketsIds.Contains(t.TicketId)).AsAsyncEnumerable())
+                {
+                    var retornoAcao = new RetornoAcao<Ticket>
+                    {
+                        Result = ticket
+                    };
 
-                if (ticket == null)
-                {
-                    retorno.MensagemErro = "Ficha não encontrada";
-                }
-                else
-                {
                     if (ticket.Status != StatusTicket.EmAberto && ticketRequest.Status != StatusTicket.EmAberto)
                     {
-                        retorno.Sucesso = false;
-                        retorno.MensagemErro = "Ficha já foi " + (ticket.Status == StatusTicket.Devolvido ? "devolvida" : "entregue") +
+                        retornoAcao.MensagemErro = "Ficha já foi " + (ticket.Status == StatusTicket.Devolvido ? "devolvida" : "entregue") +
                             $" em {ticket.DataConfirmacao:dd/MM/yyyy HH:mm}";
                     }
                     else
@@ -187,6 +189,7 @@ namespace EventoTickets.Server.Controllers
                         if (ticketRequest.Status == StatusTicket.Entregue)
                         {
                             var talao = await _context.Taloes.Where(t => t.TalaoId.Equals(ticket.TalaoId))
+                                .AsNoTracking()
                                 .Select(t => new
                                 {
                                     t.ResponsavelTalao
@@ -196,13 +199,14 @@ namespace EventoTickets.Server.Controllers
                                 ticket.Status = StatusTicket.Avulso;
                         }
 
-                        await _context.SaveChangesAsync();
-
-                        retorno.Sucesso = true;
+                        retornoAcao.Sucesso = true;
                     }
 
-                    retorno.Result = ticket;
+                    retorno.Result.Add(retornoAcao);
                 }
+
+                await _context.SaveChangesAsync();
+                retorno.Sucesso = true;
             }
             catch (Exception ex)
             {
