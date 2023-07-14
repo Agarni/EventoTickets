@@ -87,7 +87,9 @@ namespace EventoTickets.Client.Pages
 
             await hubConnection.StartAsync();
             await CarregarTickets();
-            await fichaLancada.FocusAsync();
+
+            if (fichaLancada is not null)
+                await fichaLancada.FocusAsync();
         }
 
         private void CallCarregarTickets()
