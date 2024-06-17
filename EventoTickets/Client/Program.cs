@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 namespace EventoTickets.Client
 {
@@ -32,6 +33,8 @@ namespace EventoTickets.Client
                 config.SnackbarConfiguration.ShowTransitionDuration = 500;
                 config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
             });
+
+            builder.Services.AddHotKeys2();
 
             await builder.Build().RunAsync();
         }

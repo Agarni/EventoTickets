@@ -26,7 +26,7 @@ namespace EventoTickets.Client.Pages
         [Parameter]
         public string Id { get; set; }
 
-        #region Vari·veis globais
+        #region Vari√°veis globais
         private bool valido;
         private MudForm form;
         private int qtdTaloes, qtdTickets;
@@ -35,7 +35,7 @@ namespace EventoTickets.Client.Pages
         private HubConnection hubConnection;
         private Talao talaoSelecionado = null;
         private Talao talaoSemEditar = null;
-        #endregion Vari·veis globais
+        #endregion Vari√°veis globais
 
         protected override async Task OnInitializedAsync()
         {
@@ -103,7 +103,7 @@ namespace EventoTickets.Client.Pages
         {
             if (qtdTaloes == 0 || qtdTickets == 0)
             {
-                Snackbar.Add("Quantidade de talıes e N∫ de bilhetes por tal„o devem ser superiores a 0 (zero)", Severity.Error);
+                Snackbar.Add("Quantidade de tal√µes e N¬∫ de bilhetes por tal√£o devem ser superiores a 0 (zero)", Severity.Error);
                 StateHasChanged();
             }
             else
@@ -115,11 +115,11 @@ namespace EventoTickets.Client.Pages
                     var retorno = await response.Content.ReadFromJsonAsync<RetornoAcao>();
                     if (!retorno.Sucesso)
                     {
-                        Snackbar.Add($"N„o foi possÌvel gerar talıes: {retorno.MensagemErro}", Severity.Error);
+                        Snackbar.Add($"N√£o foi poss√≠vel gerar tal√µes: {retorno.MensagemErro}", Severity.Error);
                     }
                     else
                     {
-                        Snackbar.Add("Talıes gerados com sucesso", Severity.Success);
+                        Snackbar.Add("Tal√µes gerados com sucesso", Severity.Success);
                         
                         if (IsConnected)
                         {
@@ -165,7 +165,7 @@ namespace EventoTickets.Client.Pages
 
         async void ExcluirTalao(Talao talao)
         {
-            bool? result = await DialogService.ShowMessageBox("Excluir", "Confirma a exclus„o do tal„o?",
+            bool? result = await DialogService.ShowMessageBox("Excluir", "Confirma a exclus√£o do tal√£o?",
                yesText: "Excluir", cancelText: "Cancelar");
 
             if (result.GetValueOrDefault())
@@ -174,18 +174,18 @@ namespace EventoTickets.Client.Pages
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    Snackbar.Add("N„o foi possÌvel excluir tal„o: " + await response.Content.ReadAsStringAsync(), Severity.Error);
+                    Snackbar.Add("NÔøΩo foi possÔøΩvel excluir tal√£o: " + await response.Content.ReadAsStringAsync(), Severity.Error);
                 }
                 else
                 {
                     var retorno = await response.Content.ReadFromJsonAsync<RetornoAcao>();
                     if (!retorno.Sucesso)
                     {
-                        Snackbar.Add($"N„o foi possÌvel excluir tal„o: {retorno.MensagemErro}", Severity.Error);
+                        Snackbar.Add($"NÔøΩo foi poss√≠vel excluir tal√£o: {retorno.MensagemErro}", Severity.Error);
                     }
                     else
                     {
-                        Snackbar.Add("Tal„o excluÌdo com sucesso!", Severity.Success);
+                        Snackbar.Add("Tal√£o exclu√≠do com sucesso!", Severity.Success);
 
                         if (IsConnected)
                         {

@@ -90,8 +90,6 @@
         _ = hubConnection.DisposeAsync();
     }
 
-    [Inject] private IDialogService DialogService { get; set; }
-
     void AlterarEvento(string id) => NavigationManager.NavigateTo($"EditarEvento/{id}");
     void CriarEvento() => NavigationManager.NavigateTo($"EditarEvento");
 

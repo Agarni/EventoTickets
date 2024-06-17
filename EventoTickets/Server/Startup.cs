@@ -35,7 +35,10 @@ namespace EventoTickets.Server
                     new[] { "application/octet-stream" });
             });
 
-            var localDB = Path.GetDirectoryName(Configuration.GetConnectionString("EventoDbContext")
+            // Definir caminho conforme plataforma
+            var connectionDbContext = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                System.Runtime.InteropServices.OSPlatform.Windows) ? "EventoDbContext" : "EventoDbContextUnix";
+            var localDB = Path.GetDirectoryName(Configuration.GetConnectionString(connectionDbContext)
                 .Replace("Filename=", ""));
 
             if (!Directory.Exists(localDB))
@@ -44,7 +47,7 @@ namespace EventoTickets.Server
             }
 
             services.AddDbContext<EventoDbContext>(options =>
-                    options.UseSqlite(Configuration.GetConnectionString("EventoDbContext")));
+                    options.UseSqlite(Configuration.GetConnectionString(connectionDbContext)));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

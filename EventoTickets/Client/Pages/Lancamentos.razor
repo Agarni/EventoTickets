@@ -1,13 +1,17 @@
 ﻿@page "/lancamentos"
 
+@implements IAsyncDisposable
+@using System.Text.Encodings.Web
 @using EventoTickets.Client.Components
 @using EventoTickets.Shared
 @using Microsoft.AspNetCore.SignalR.Client
 @using MudBlazor;
+@using Toolbelt.Blazor.HotKeys2
 
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject HotKeys HotKeys
 
 <style>
 	.tooltip {
@@ -82,29 +86,35 @@ else
 						<EditForm Model="@lancamento">
 							<div class="lancamentos">
 								<div class="numeroFicha">
-									<MudNumericField @ref="fichaLancada" T="int" Label="Ficha inicial" Style="max-width:150px;"
-											 @bind-Value="numeroTicket" Required="true" />
+									<MudNumericField @ref="_fichaInicial" T="int" Label="Ficha inicial" Style="max-width:150px;"
+											 @bind-Value="numeroTicket" Required="true" Min="@tickets.Min(x => x.NumeroTicket)"
+											 Max="@tickets.Max(x => x.NumeroTicket)" MaxLength="@tickets.Max(x => x.NumeroTicket).ToString().Length" />
 								</div>
 								<div class="numeroFicha">
-									<MudNumericField T="int" Label="Ficha final" Style="max-width:150px;"
-											 @bind-Value="lancamento.FichaFinal" />
+									<MudTooltip Text="(Ctrl + Shift + E) Para ativar/desativar ficha final">
+										<MudNumericField T="int" Label="Ficha final" Style="max-width:150px;" Disabled="@_fichaFinalDesativada" @ref="_fichaFinal"
+										                 @bind-Value="lancamento.FichaFinal"/>
+									</MudTooltip>
 								</div>
 								<div>
 									<MudButtonGroup OverrideStyles="false" Style="bottom:0;">
 										<MudButton Variant="Variant.Filled" Color="Color.Primary" style="vertical-align:bottom;" ButtonType="ButtonType.Submit"
-										   OnClick="@LancarTicket">Lançar</MudButton>
+										           OnClick="@LancarTicket">Lançar</MudButton>
 										<MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="align-self-center"
-										   OnClick="@DevolverTicket">Devolver</MudButton>
+										           OnClick="@DevolverTicket">Devolver</MudButton>
 										<MudButton Variant="Variant.Filled" Color="Color.Error" Class="align-self-center"
-										   OnClick="@ReabrirTicket">Reabrir</MudButton>
+										           OnClick="@ReabrirTicket">Reabrir</MudButton>
 									</MudButtonGroup>
+								</div>
+								<div>
+									<span style="margin-left: 5px;">@((MarkupString)_ultimoLancamento.ToString())</span>
 								</div>
 							</div>
 						</EditForm>
 					</div>
 					<div class="fichas">
-						@foreach (Ticket ticket in tickets.Where(x => x.Status != StatusTicket.Entregue &&
-								x.Status != StatusTicket.Avulso).ToList())
+						@foreach (var ticket in tickets.Where(x => x.Status != StatusTicket.Entregue &&
+						                                           x.Status != StatusTicket.Avulso).ToList())
 						{
 							<MudTooltip Text="@(ticket.Talao?.ResponsavelTalao)">
 								<MudPaper Elevation="0" Outlined="true"

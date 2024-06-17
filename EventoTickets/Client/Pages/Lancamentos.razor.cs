@@ -8,9 +8,10 @@ using Microsoft.AspNetCore.Components.Web;
 using EventoTickets.Shared;
 using Microsoft.AspNetCore.SignalR.Client;
 using MudBlazor;
-using System.Net.Sockets;
 using EventoTickets.Shared.Requests;
 using System.Diagnostics;
+using System.Text;
+using Toolbelt.Blazor.HotKeys2;
 
 namespace EventoTickets.Client.Pages
 {
@@ -19,10 +20,14 @@ namespace EventoTickets.Client.Pages
         [Parameter]
         public string Id { get; set; }
 
-        #region Vari·veis globais
+        #region Vari√°veis globais
+
+        private MudNumericField<int> _fichaFinal = null!;
         private List<Ticket> tickets;
         private Evento evento;
         private HubConnection hubConnection;
+        private HotKeysContext? _hotKeysContext;
+        
         private int numeroTicket
         {
             get => lancamento.FichaInicial;
@@ -32,9 +37,12 @@ namespace EventoTickets.Client.Pages
                 lancamento.FichaFinal = lancamento.FichaFinal == 0 || value > lancamento.FichaFinal ? value : lancamento.FichaFinal;
             }
         }
-        private MudNumericField<int> fichaLancada;
+        private MudNumericField<int> _fichaInicial;
         private LancamentoFicha lancamento = new();
-        #endregion Vari·veis globais
+        private bool _fichaFinalDesativada = true;
+        private StringBuilder _ultimoLancamento = new();
+
+        #endregion Vari√°veis globais
 
         protected override async Task OnInitializedAsync()
         {
@@ -79,7 +87,7 @@ namespace EventoTickets.Client.Pages
                 }
             });
 
-            // Quando houver atualizaÁ„o do talon·rio
+            // Quando houver atualiza√ß√£o do talon√°rio
             hubConnection.On<string>("AtualizarTaloesMessage", (_) =>
             {
                 CallCarregarTickets();
@@ -87,9 +95,31 @@ namespace EventoTickets.Client.Pages
 
             await hubConnection.StartAsync();
             await CarregarTickets();
+            
+            // Criando hotkey para habilitar/desabilitar ficha final
+            _hotKeysContext = HotKeys.CreateContext()
+                .Add(ModCode.Ctrl | ModCode.Shift, Code.E, AtivarDesativarFichaFinal, 
+                    "Ativar/Desativar ficha final",
+                    Exclude.None);
 
-            if (fichaLancada is not null)
-                await fichaLancada.FocusAsync();
+            if (_fichaInicial is not null)
+                await _fichaInicial.FocusAsync();
+        }
+
+        private async ValueTask AtivarDesativarFichaFinal()
+        {
+            _fichaFinalDesativada = !_fichaFinalDesativada;
+
+            switch (_fichaFinalDesativada)
+            {
+                case true when _fichaInicial is not null:
+                    await _fichaInicial.FocusAsync();
+                    break;
+                
+                case false when _fichaFinal is not null:
+                    await _fichaFinal.FocusAsync();
+                    break;
+            }
         }
 
         private void CallCarregarTickets()
@@ -100,8 +130,8 @@ namespace EventoTickets.Client.Pages
             });
         }
 
-        public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
-        Task SendMessage(Ticket ticket) => hubConnection.SendAsync("AtualizarTicketMessage", ticket);
+        private bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+        private Task SendMessage(Ticket ticket) => hubConnection.SendAsync("AtualizarTicketMessage", ticket);
 
         private async Task CarregarTickets()
         {
@@ -145,28 +175,20 @@ namespace EventoTickets.Client.Pages
             return cor;
         }
 
-        public async void TicketKeyDown(KeyboardEventArgs args)
-        {
-            if (args.Code == "Enter" || args.Code == "NumpadEnter")
-            {
-                await LancarTicket();
-            }
-        }
-
         private async Task LancarTicket()
         {
             var ticket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId));
             
             if (ticket == null)
             {
-                Snackbar.Add($"Informe um n∫ da ficha inicial entre {tickets.Min(x => x.NumeroTicket)} e {tickets.Max(x => x.NumeroTicket)}",
+                Snackbar.Add($"Informe um n¬∫ de ficha inicial entre {tickets.Min(x => x.NumeroTicket)} e {tickets.Max(x => x.NumeroTicket)}",
                     Severity.Warning);
-                await fichaLancada.FocusAsync();
+                await _fichaInicial.FocusAsync();
                 return;
             }
 
             var listaTickets = ListaIdsTickets();
-            //var idTicket = ticket.TicketId;
+            
             await AtualizarTicket(listaTickets.ToArray(), StatusTicket.Entregue);
         }
 
@@ -174,10 +196,39 @@ namespace EventoTickets.Client.Pages
         {
             if (idsTickets.Length == 0)
             {
-                Snackbar.Add("Informe o n∫ da ficha", Severity.Warning);
-                await fichaLancada.FocusAsync();
+                Snackbar.Add("Informe o n¬∫ da ficha", Severity.Warning);
+                await _fichaInicial.FocusAsync();
                 return;
             }
+
+            var qtdFichas = (lancamento.FichaFinal - lancamento.FichaInicial) + 1;
+            if (!_fichaFinalDesativada && qtdFichas > 5)
+            {
+                var result = await DialogService.ShowMessageBox("Confirma√ß√£o de lan√ßamento de fichas", 
+                    $"Tem certeza que deseja realizar a {descricaoStatus(statusTicket).ToLower()} de {qtdFichas} fichas?",
+                    yesText: "Sim", cancelText: "N√£o");
+                
+                if (result is not true)
+                    return;
+            }
+            
+            _ultimoLancamento.Clear();
+            _ultimoLancamento.Append("√öltimo lan√ßamento: <strong>Ficha");
+            
+            if (!_fichaFinal.Disabled && (lancamento.FichaInicial < lancamento.FichaFinal))
+                _ultimoLancamento.Append("s de");
+            
+            _ultimoLancamento.Append(' ');
+            _ultimoLancamento.Append(lancamento.FichaInicial);
+
+            if (!_fichaFinal.Disabled && (lancamento.FichaInicial < lancamento.FichaFinal))
+            {
+                _ultimoLancamento.Append(" a ");
+                _ultimoLancamento.Append(lancamento.FichaFinal);
+            }
+
+            _ultimoLancamento.Append($" ({descricaoStatus(statusTicket)})");
+            _ultimoLancamento.Append("</strong>");
 
             var ticketRequest = new TicketRequest
             {
@@ -194,7 +245,7 @@ namespace EventoTickets.Client.Pages
                 {
                     if (retorno.Result == null)
                     {
-                        Snackbar.Add($"N„o foi possÌvel atualizar ficha: {retorno.MensagemErro}", Severity.Error);
+                        Snackbar.Add($"N√£o foi poss√≠vel atualizar ficha: {retorno.MensagemErro}", Severity.Error);
                     }
                     else
                     {
@@ -221,12 +272,12 @@ namespace EventoTickets.Client.Pages
                         {
                             var ticketConsulta = tickets?.FirstOrDefault(x => x.TicketId == retornoTicket.Result.TicketId);
 
-                            if (ticketConsulta != null)
-                            {
-                                ticketConsulta.Status = retornoTicket.Result.Status;
-                                ticketConsulta.DataConfirmacao = retornoTicket.Result.DataConfirmacao;
-                                StateHasChanged();
-                            }
+                            if (ticketConsulta == null) 
+                                continue;
+                            
+                            ticketConsulta.Status = retornoTicket.Result.Status;
+                            ticketConsulta.DataConfirmacao = retornoTicket.Result.DataConfirmacao;
+                            StateHasChanged();
                         }
                     }
 
@@ -235,35 +286,34 @@ namespace EventoTickets.Client.Pages
                 }
             }
 
-            await fichaLancada.FocusAsync();
-        }
-
-        private void NumeroFicha_Changed(string valor)
-        {
-            if (!int.TryParse(valor, out int numeroFicha)) 
-                return;
-
-            lancamento.FichaFinal = numeroFicha;
+            await _fichaInicial.FocusAsync();
+            return;
+            
+            string descricaoStatus(StatusTicket statusTicket1) =>
+                statusTicket1 switch
+                {
+                    StatusTicket.Entregue => "Entrega",
+                    StatusTicket.Devolvido => "Devolu√ß√£o",
+                    StatusTicket.Avulso => "Venda avulsa",
+                    _ => "Reabertura"
+                };
         }
 
         private async void DevolverTicket()
         {
-            //var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
             await AtualizarTicket(ListaIdsTickets(StatusTicket.Devolvido)?.ToArray(), StatusTicket.Devolvido);
         }
 
         private async void ReabrirTicket()
         {
-            //var idTicket = tickets.FirstOrDefault(t => t.NumeroTicket.Equals(lancamento.FichaInicial) && t.EventoId.Equals(evento.EventoId))?.TicketId ?? 0;
             await AtualizarTicket(ListaIdsTickets(StatusTicket.EmAberto)?.ToArray(), StatusTicket.EmAberto);
         }
 
         private List<int> ListaIdsTickets(StatusTicket statusTicket = StatusTicket.Entregue)
         {
-            //if (lancamento.FichaFinal <= lancamento.FichaInicial)
-            //    return new() { lancamento.FichaInicial, lancamento.FichaFinal };
-
-            var lst = tickets.Where(x => x.NumeroTicket >= lancamento.FichaInicial && x.NumeroTicket <= lancamento.FichaFinal)
+            var lst = (_fichaFinal.Disabled
+                    ? tickets.Where(x => x.NumeroTicket.Equals(lancamento.FichaInicial))
+                    : tickets.Where(x => x.NumeroTicket >= lancamento.FichaInicial && x.NumeroTicket <= lancamento.FichaFinal))
                 .ToList();
 
             // Considera somente os tickets em aberto quando entregar ou devolver
@@ -279,6 +329,12 @@ namespace EventoTickets.Client.Pages
         {
             public int FichaInicial { get; set; }
             public int FichaFinal { get; set; }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (_hotKeysContext is not null)
+                await _hotKeysContext.DisposeAsync();
         }
     }
 }
