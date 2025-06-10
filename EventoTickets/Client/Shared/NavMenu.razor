@@ -1,6 +1,6 @@
 ﻿@using MudBlazor;
 
-<MudPaper Width="100%" Class="py-3" Elevation="1">
+<MudPaper Style="margin: 10px;" Elevation="1">
     <MudNavMenu>
         <MudText Typo="Typo.h6" Class="px-4">Manutenção de eventos</MudText>
         <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">por talonário</MudText>
@@ -8,7 +8,7 @@
         <MudNavLink Href="">Home</MudNavLink>
         <MudNavLink Icon="@Icons.Material.Filled.Dashboard" Href="/painel">Painel</MudNavLink>
         <MudNavLink Icon="@Icons.Material.Filled.Grading" Href="/lancamentos">Lançamentos</MudNavLink>
-        <MudNavGroup Title="Manutenção" Icon="@Icons.Filled.Settings" Expanded="collapseNavMenu">
+        <MudNavGroup Title="Manutenção" Icon="@Icons.Material.Filled.Settings" @bind-Expanded="@_collapseNavMenu">
             <MudNavLink Href="/eventos">Eventos</MudNavLink>
             <MudNavLink Href="/talonario">Talonário</MudNavLink>
         </MudNavGroup>
@@ -16,12 +16,12 @@
 </MudPaper>
 
 @code {
-    private bool collapseNavMenu = false;
+    private bool _collapseNavMenu = false;
 
-    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
     {
-        collapseNavMenu = !collapseNavMenu;
+        _collapseNavMenu = !_collapseNavMenu;
     }
 }

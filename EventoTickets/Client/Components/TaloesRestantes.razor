@@ -17,7 +17,7 @@
                         Style=@($"background-color:{((@talao.NumeroInicial % 2 == 0) ? Colors.Blue.Lighten4 : Colors.Blue.Lighten5)}")>
                         @foreach (var item in @talao.Tickets)
                         {
-                            <MudChip Class="pa-1 ma-1" Style="@($"background:{Colors.Blue.Default};color:#fff;width:75px; text-align:center;")">
+                            <MudChip T="int" Class="pa-1 ma-1" Style="@($"background:{Colors.Blue.Default};color:#fff;width:75px; text-align:center;")">
                                 @item.NumeroTicket
                             </MudChip>
                         }

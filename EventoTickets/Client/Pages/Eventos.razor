@@ -24,7 +24,7 @@
         <MudTd DataLabel="Evento">@context.NomeEvento</MudTd>
         <MudTd DataLabel="Data do evento">@context.DataRealizacao</MudTd>
         <MudTd DataLabel="Evento padrão" Style="align-content:center">
-            <MudCheckBox @bind-Checked="@context.EventoPadrao" ReadOnly="true" />
+            <MudCheckBox T="bool" @bind-Checked="@context.EventoPadrao" ReadOnly="true" />
         </MudTd>
         <MudTd>
             <MudTooltip Text="Talonário">

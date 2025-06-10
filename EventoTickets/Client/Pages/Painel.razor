@@ -34,8 +34,8 @@ else
                             @foreach (Ticket ticket in ticketsRestantes)
                             {
                                 <MudTooltip Text="@ticket.Talao.ResponsavelTalao">
-                                    <MudChip Class="pa-1 ma-1"
-                                 Style="@($"background:{Colors.Blue.Default};color:#fff;width:75px; text-align:center;")">
+                                    <MudChip Class="pa-1 ma-1" T="int"
+                                        Style="@($"background:{Colors.Blue.Default};color:#fff;width:75px; text-align:center;")">
                                         @ticket.NumeroTicket
                                     </MudChip>
                                 </MudTooltip>

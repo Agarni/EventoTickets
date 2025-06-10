@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="EventoTickets/Client/EventoTickets.Client.csproj" />
+  <Project Path="EventoTickets/Server/EventoTickets.Server.csproj" />
+  <Project Path="EventoTickets/Shared/EventoTickets.Shared.csproj" />
+</Solution>

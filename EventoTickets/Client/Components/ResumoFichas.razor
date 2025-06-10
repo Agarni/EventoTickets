@@ -2,7 +2,7 @@
 @using MudBlazor
 
 <MudPaper Outlined="true" Square="true">
-    <MudList DisablePadding="true">
+    <MudList DisablePadding="true" T="string">
         <MudListItem>
             <MudPaper Class="mud-width-full mud-theme-primary" Elevation="0" Outlined="true">
                 <MudText Align="Align.Center" Typo="Typo.subtitle1">Distribuídas</MudText>
@@ -22,7 +22,7 @@
             <MudText Align="Align.Center" Typo="Typo.h4">@TotalConfirmadas</MudText>
         </MudListItem>
         <MudListItem>
-            <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Grey.Lighten3};color:{Colors.Grey.Darken2}")" Elevation="0" Outlined="true">
+            <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Gray.Lighten3};color:{Colors.Gray.Darken2}")" Elevation="0" Outlined="true">
                 <MudText Align="Align.Center" Typo="Typo.subtitle1">Entregues</MudText>
             </MudPaper>
             <MudText Align="Align.Center" Typo="Typo.h4">@TotalEntregues</MudText>

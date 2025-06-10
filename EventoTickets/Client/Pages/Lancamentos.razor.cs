@@ -163,7 +163,7 @@ namespace EventoTickets.Client.Pages
         {
             var cor = ticket.Status switch
             {
-                StatusTicket.Entregue => Colors.Grey.Lighten2, //Color.Default,
+                StatusTicket.Entregue => Colors.Gray.Lighten2, //Color.Default,
                 StatusTicket.Devolvido => Colors.Purple.Accent3 + ";color:#fff", //Color.Secondary,
                 StatusTicket.Avulso => Colors.Green.Default + ";color:#fff", //Color.Success,
                 _ => Colors.Blue.Default + ";color:#fff" //Color.Info
