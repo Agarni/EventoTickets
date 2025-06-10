@@ -28,19 +28,19 @@
         </MudTd>
         <MudTd>
             <MudTooltip Text="Talonário">
-                <MudFab Icon="@Icons.Material.Filled.MenuBook" IconSize="Size.Small" Size="Size.Small"
+                <MudFab StartIcon="@Icons.Material.Filled.MenuBook" IconSize="Size.Small" Size="Size.Small"
                         Color="Color.Success" Disabled="@(context.DataRealizacao <= DateTime.Now)" OnClick="() => ManutencaoTaloes(context.EventoId)" />
             </MudTooltip>
             <MudTooltip Text="Definir como padrão">
-                <MudFab Icon="@Icons.Material.Filled.Check" IconSize="Size.Small" Size="Size.Small"
+                <MudFab StartIcon="@Icons.Material.Filled.Check" IconSize="Size.Small" Size="Size.Small"
                         Color="Color.Info" Disabled="context.EventoPadrao" OnClick="() => DefinirPadrao(context)" />
             </MudTooltip>
             <MudTooltip Text="Alterar">
-                <MudFab Icon="@Icons.Material.Filled.Edit" IconSize="Size.Small" Size="Size.Small"
+                <MudFab StartIcon="@Icons.Material.Filled.Edit" IconSize="Size.Small" Size="Size.Small"
                         OnClick="() => AlterarEvento(context.EventoId)" Color="Color.Primary" />
             </MudTooltip>
             <MudTooltip Text="Excluir">
-                <MudFab Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" IconSize="Size.Small" Size="Size.Small"
+                <MudFab StartIcon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" IconSize="Size.Small" Size="Size.Small"
                         Color="Color.Error" OnClick="() => ExcluirEvento(context.EventoId)" />
             </MudTooltip>
         </MudTd>
