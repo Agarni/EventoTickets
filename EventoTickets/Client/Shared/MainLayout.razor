@@ -13,12 +13,21 @@
 <MudPopoverProvider />
 
 <MudLayout>
+    <style>
+        body {
+            background-image: url("imagens/130907-blue-polygon-pattern-background.jpg");
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+    </style>
     <MudDrawer @bind-Open="@_drawerOpen" Class="border-0" Style="top:-5px; background-color: rgba(248, 248, 248, 0.2);" Width="300px" Elevation="0">
-        <NavMenu />
+        <NavMenu/>
     </MudDrawer>
     <MudAppBar>
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        @evento.NomeEvento
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
+            <h5 style="margin: 0;">@evento.NomeEvento</h5>
+        </div>
     </MudAppBar>
 
     @if (Installable)
@@ -27,7 +36,7 @@
             <div class="install-prompt col-sm-8 col-sm-offset-2 col-lg-6 col-lg-offset-3">
                 <span>Install app?</span>
                 <button class="installButton btn btn-primary" @onclick="@(() => InstallClicked())">Sim</button>
-                <button class="cancelButton btn btn-danger" @onclick="@(()=>Installable=false)">Não</button>
+                <button class="cancelButton btn btn-danger" @onclick="@(() => Installable = false)">Não</button>
             </div>
         </div>
     }

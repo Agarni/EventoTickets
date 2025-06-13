@@ -2,11 +2,13 @@
 
 <MudPaper Style="margin: 10px;" Elevation="1">
     <MudNavMenu>
-        <MudPaper Style="padding: 10px;">
-            <MudText Typo="Typo.h6" Class="px-4">Manutenção de eventos</MudText>
-            <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">por talonário</MudText>
-        </MudPaper>
-        <MudNavLink Href="/">Home</MudNavLink>
+        <MudTooltip Text="Página inicial">
+            <MudPaper Style="margin-left: 5px; margin-bottom: 2px; padding: 10px; cursor: pointer; background-color: rgba(0, 0, 255, 0.2);" @onclick="NavegarParaRota">
+                <MudText Typo="Typo.h6" Class="px-4">Manutenção de eventos</MudText>
+                <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">por talonário</MudText>
+            </MudPaper>
+        </MudTooltip>
+        @* <MudNavLink Href="/">Home</MudNavLink> *@
         <MudNavLink Icon="@Icons.Material.Filled.Dashboard" Href="/painel">Painel</MudNavLink>
         <MudNavLink Icon="@Icons.Material.Filled.Grading" Href="/lancamentos">Lançamentos</MudNavLink>
         <MudNavGroup Title="Manutenção" Icon="@Icons.Material.Filled.Settings" @bind-Expanded="@_collapseNavMenu">
@@ -18,11 +20,19 @@
 
 @code {
     private bool _collapseNavMenu = false;
-
     private string NavMenuCssClass => _collapseNavMenu ? "collapse" : null;
+    
+    [Inject]
+    NavigationManager NavigationManager { get; set; }
 
     private void ToggleNavMenu()
     {
         _collapseNavMenu = !_collapseNavMenu;
     }
+
+    private void NavegarParaRota()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
 }
