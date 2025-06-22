@@ -48,15 +48,15 @@ else
         get
         {
             var taloes = new List<Talao>();
-            var tickets = Tickets
+            var tickets = Tickets?
                 .Where(t => (!Avulsos && t.Status == StatusTicket.EmAberto &&
                              !string.IsNullOrWhiteSpace(t.Talao?.ResponsavelTalao)) ||
-                            (Avulsos && t.Status == StatusTicket.Entregue && string.IsNullOrWhiteSpace(t.Talao?.ResponsavelTalao))).ToList();
+                            (Avulsos && t.Status == StatusTicket.Avulso)).ToList();
             string? responsavel = null;
             var talao = new Talao();
             var i = 0;
 
-            if (Tickets == null) 
+            if (tickets == null) 
                 return taloes;
             
             foreach (var ticket in tickets.OrderBy(x => x.Talao.ResponsavelTalao).ThenBy(n => n.NumeroTicket).ToList())

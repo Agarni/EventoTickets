@@ -37,16 +37,16 @@
             <MudText Align="Align.Center" Typo="Typo.h4">@_totalEntregues</MudText>
         </MudListItem>
         <MudListItem>
-            <MudPaper Class="mud-width-full mud-theme-secondary" Elevation="0" Outlined="true">
-                <MudText Align="Align.Center" Typo="Typo.subtitle1">Devolvidas</MudText>
-            </MudPaper>
-            <MudText Align="Align.Center" Typo="Typo.h4">@_totalDevolvidas</MudText>
-        </MudListItem>
-        <MudListItem>
             <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Green.Default};color:#fff")" Elevation="0" Outlined="true">
                 <MudText Align="Align.Center" Typo="Typo.subtitle1">Avulsas</MudText>
             </MudPaper>
             <MudText Align="Align.Center" Typo="Typo.h4">@_totalAvulsas</MudText>
+        </MudListItem>
+        <MudListItem>
+            <MudPaper Class="mud-width-full mud-theme-secondary" Elevation="0" Outlined="true">
+                <MudText Align="Align.Center" Typo="Typo.subtitle1">Devolvidas</MudText>
+            </MudPaper>
+            <MudText Align="Align.Center" Typo="Typo.h4">@_totalDevolvidas</MudText>
         </MudListItem>
         <MudListItem>
             <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Indigo.Darken4};color:#fff")" Elevation="0" Outlined="true">
@@ -63,7 +63,7 @@
     private int _totalAvulsas;
     private int _totalEntregues;
     private int _totalDevolvidas;
-    private int TotalRestantes => _totalDistribuidas - _totalEntregues - _totalDevolvidas;
+    private int TotalRestantes => _totalDistribuidas - _totalEntregues - _totalDevolvidas + _totalAvulsas;
 
     [Parameter]
     public EventCallback<List<Ticket>> OnAtualizarTickets { get; set; }
@@ -98,7 +98,7 @@
         _totalFichas = ListaTickets?.Count ?? 0;
         _totalDistribuidas = ListaTickets?.Count(x => !string.IsNullOrWhiteSpace(x.Talao?.ResponsavelTalao)) ?? 0;
         _totalAvulsas = ListaTickets?.Count(x => x.Status == StatusTicket.Avulso) ?? 0;
-        _totalEntregues = ListaTickets?.Count(x => x.Status == StatusTicket.Entregue) ?? 0;
+        _totalEntregues = (ListaTickets?.Count(x => x.Status is StatusTicket.Entregue) ?? 0) + _totalAvulsas;
         _totalDevolvidas = ListaTickets?.Count(x => x.Status == StatusTicket.Devolvido) ?? 0;
 
         StateHasChanged();
