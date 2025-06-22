@@ -11,6 +11,7 @@ using MudBlazor;
 using EventoTickets.Shared.Requests;
 using System.Diagnostics;
 using System.Text;
+using EventoTickets.Client.Components;
 using Toolbelt.Blazor.HotKeys2;
 
 namespace EventoTickets.Client.Pages
@@ -24,9 +25,10 @@ namespace EventoTickets.Client.Pages
 
         private MudNumericField<int> _fichaFinal = null!;
         private List<Ticket> tickets;
-        private Evento evento;
+        private Evento? evento;
         private HubConnection hubConnection;
         private HotKeysContext? _hotKeysContext;
+        private ResumoFichas _resumoFichas = null!;
         
         private int numeroTicket
         {
@@ -40,7 +42,8 @@ namespace EventoTickets.Client.Pages
         private MudNumericField<int> _fichaInicial;
         private LancamentoFicha lancamento = new();
         private bool _fichaFinalDesativada = true;
-        private StringBuilder _ultimoLancamento = new();
+        private readonly StringBuilder _ultimoLancamento = new();
+        private bool _statusInicializado;
 
         #endregion Variáveis globais
 
@@ -56,35 +59,48 @@ namespace EventoTickets.Client.Pages
                 Id = evento?.EventoId;
             }
 
-            if (evento == null)
-                evento = new Evento();
+            evento ??= new Evento();
 
             hubConnection = new HubConnectionBuilder()
                 .WithUrl(NavigationManager.ToAbsoluteUri("/eventohub"))
                 .WithAutomaticReconnect()
                 .Build();
+            
+            hubConnection.Reconnecting += (_) =>
+            {
+                _resumoFichas.StatusConexao = StatusConexao.Reconectando;
+                Snackbar.Add("Reconectando ao SignalR...", Severity.Warning);
+                return Task.CompletedTask;
+            };
+            
+            hubConnection.Closed += (_) =>
+            {
+                _resumoFichas.StatusConexao = StatusConexao.Desconectado;
+                Snackbar.Add("Conexão com SignalR fechada.", Severity.Error);
+                return Task.CompletedTask;
+            };
 
-            hubConnection.Closed += async (error) =>
+            hubConnection.Reconnected += async (error) =>
             {
                 await Task.Delay(new Random().Next(0, 5) * 1000);
-                await hubConnection.StartAsync();
+                _resumoFichas.StatusConexao = StatusConexao.Conectado;
                 await CarregarTickets();
             };
 
-            hubConnection.On<Ticket>("AtualizarTicketMessage", (ticket) =>
+            hubConnection.On<Ticket?>("AtualizarTicketMessage", (ticket) =>
             {
-                if (ticket != null)
+                if (ticket == null) 
+                    return;
+                
+                var ticketLancado = tickets?.FirstOrDefault(t => t.TicketId.Equals(ticket.TicketId));
+
+                if (ticketLancado != null)
                 {
-                    var ticketLancado = tickets?.FirstOrDefault(t => t.TicketId.Equals(ticket.TicketId));
-
-                    if (ticketLancado != null)
-                    {
-                        ticketLancado.Status = ticket.Status;
-                        ticketLancado.DataConfirmacao = ticket.DataConfirmacao;
-                    }
-
-                    StateHasChanged();
+                    ticketLancado.Status = ticket.Status;
+                    ticketLancado.DataConfirmacao = ticket.DataConfirmacao;
                 }
+
+                StateHasChanged();
             });
 
             // Quando houver atualização do talonário
@@ -99,11 +115,19 @@ namespace EventoTickets.Client.Pages
             // Criando hotkey para habilitar/desabilitar ficha final
             _hotKeysContext = HotKeys.CreateContext()
                 .Add(ModCode.Ctrl | ModCode.Shift, Code.E, AtivarDesativarFichaFinal, 
-                    "Ativar/Desativar ficha final",
-                    Exclude.None);
+                    "Ativar/Desativar ficha final", Exclude.None);
 
             if (_fichaInicial is not null)
                 await _fichaInicial.FocusAsync();
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            if (firstRender || _statusInicializado) 
+                return;
+            
+            _statusInicializado = true;
+            _resumoFichas.StatusConexao = IsConnected ? StatusConexao.Conectado : StatusConexao.Desconectado;
         }
 
         private async ValueTask AtivarDesativarFichaFinal()
@@ -124,10 +148,7 @@ namespace EventoTickets.Client.Pages
 
         private void CallCarregarTickets()
         {
-            Task.Run(async () =>
-            {
-                await CarregarTickets();
-            });
+            Task.Run(CarregarTickets);
         }
 
         private bool IsConnected => hubConnection.State == HubConnectionState.Connected;
@@ -201,7 +222,7 @@ namespace EventoTickets.Client.Pages
                 return;
             }
 
-            var qtdFichas = (lancamento.FichaFinal - lancamento.FichaInicial) + 1;
+            var qtdFichas = lancamento.FichaFinal - lancamento.FichaInicial + 1;
             if (!_fichaFinalDesativada && qtdFichas > 5)
             {
                 var result = await DialogService.ShowMessageBox("Confirmação de lançamento de fichas", 

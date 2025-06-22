@@ -13,4 +13,11 @@ namespace EventoTickets.Shared
         Devolvido,
         Avulso
     }
+    
+    public enum StatusConexao
+    {
+        Conectado,
+        Desconectado,
+        Reconectando
+    }
 }

@@ -12,13 +12,13 @@
         <h2>Painel</h2>
     </MudCardHeader>
     <MudCardContent>
-        @if (evento == null)
+        @if (_evento is null)
         {
             <MudSkeleton/>
             <MudSkeleton Animation="Animation.False"/>
             <MudSkeleton Animation="Animation.Wave"/>
         }
-        else if (string.IsNullOrWhiteSpace(evento?.EventoId))
+        else if (string.IsNullOrWhiteSpace(_evento?.EventoId))
         {
             <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
                 Evento não encontrado/cadastrado ou não definido como padrão
@@ -28,13 +28,13 @@
         {
             <MudGrid>
                 <MudItem xs="9" md="9">
-                    @if (ticketsRestantes?.Count > 0)
+                    @if (_ticketsRestantes?.Count > 0)
                     {
-                        <h4>Fichas restantes [ @ticketsRestantes.Count ]</h4>
+                        <h4>Fichas restantes [ @_ticketsRestantes.Count ]</h4>
                         <MudGrid>
                             <MudItem>
                                 <MudPaper Class="d-flex flex-wrap px-2" Elevation="0">
-                                    @foreach (Ticket ticket in ticketsRestantes)
+                                    @foreach (var ticket in _ticketsRestantes)
                                     {
                                         <MudTooltip Text="@ticket.Talao.ResponsavelTalao">
                                             <MudChip Class="pa-1 ma-1" T="int"
@@ -46,12 +46,14 @@
                                 </MudPaper>
                             </MudItem>
                         </MudGrid>
-                        <br/>
-                        <TaloesRestantes Tickets="@tickets"/>
+                        <hr/>
+                        <TaloesResumo Tickets="@_tickets"/>
+                        <hr/>
+                        <TaloesResumo Tickets="@_tickets" Avulsos="true"/>
                     }
                     else
                     {
-                        @if (tickets?.Count > 0)
+                        @if (_tickets?.Count > 0)
                         {
                             <h4>Fichas restantes</h4>
                             <MudAlert Severity="Severity.Info">Todas as fichas distribuídas foram entregues</MudAlert>
@@ -65,7 +67,7 @@
                 </MudItem>
                 <MudItem xs="3" md="3">
                     <div style="position:fixed;width:250px;top:85px">
-                        <ResumoFichas ListaTickets="@tickets"/>
+                        <ResumoFichas ListaTickets="@_tickets" @ref="_resumoFichas"/>
                     </div>
                 </MudItem>
             </MudGrid>

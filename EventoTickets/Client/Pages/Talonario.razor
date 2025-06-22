@@ -60,10 +60,11 @@ else
             </MudCardContent>
         </MudCard>
         <br />
-        <MudTable Items="@taloes" Hover="true" Loading="@(taloes == null)" FixedHeader="true" Height="400px" Bordered="true"
+        <MudTable Items="@taloes" Hover="true" Loading="@(taloes == null)" FixedHeader="true" Bordered="true"
                   LoadingProgressColor="Color.Info" Dense="true" SelectedItem="talaoSelecionado" CanCancelEdit="true" 
                   CommitEditTooltip="Confirmar" CancelEditTooltip="Cancelar"
-                  RowEditCommit="UpdateTalao" RowEditPreview="BackupItem" RowEditCancel="CancelarEdicaoTalao">
+                  RowEditCommit="UpdateTalao" RowEditPreview="BackupItem" RowEditCancel="CancelarEdicaoTalao" 
+                  Style="height: calc(100vh - 405px); display: flex; flex-direction: column;">
             <HeaderContent>
                 <MudTh Style="text-align:center">Nº talão</MudTh>
                 <MudTh Style="text-align:center">Numeração</MudTh>

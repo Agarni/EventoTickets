@@ -3,11 +3,26 @@
 
 <MudPaper Outlined="true" Square="true">
     <MudList DisablePadding="true" T="string">
+        @if (StatusConexao != StatusConexao.Conectado)
+        {
+            <MudListItem>
+                <MudChip Color="@(StatusConexao == StatusConexao.Reconectando ? Color.Warning : Color.Error)" Class="d-flex align-center">
+                    @if (StatusConexao == StatusConexao.Desconectado)
+                    {
+                        <MudText Typo="Typo.subtitle1">Desconectado</MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.subtitle1">Reconectando</MudText>
+                    }
+                </MudChip>
+            </MudListItem>
+        }
         <MudListItem>
             <MudPaper Class="mud-width-full mud-theme-primary" Elevation="0" Outlined="true">
                 <MudText Align="Align.Center" Typo="Typo.subtitle1">Distribuídas</MudText>
             </MudPaper>
-            <MudText Align="Align.Center" Typo="Typo.h4">@TotalDistribuidas</MudText>
+            <MudText Align="Align.Center" Typo="Typo.h4">@_totalDistribuidas</MudText>
         </MudListItem>
         <MudListItem>
             <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Blue.Default};color:#fff")" Elevation="0" Outlined="true">
@@ -16,46 +31,39 @@
             <MudText Align="Align.Center" Typo="Typo.h4">@TotalRestantes</MudText>
         </MudListItem>
         <MudListItem>
-            <MudPaper Class="mud-width-full mud-theme-default" Style="@($"background:{Colors.Green.Default};color:#fff")" Elevation="0" Outlined="true">
-                <MudText Align="Align.Center" Typo="Typo.subtitle1">Confirmadas</MudText>
-            </MudPaper>
-            <MudText Align="Align.Center" Typo="Typo.h4">@TotalConfirmadas</MudText>
-        </MudListItem>
-        <MudListItem>
             <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Gray.Lighten3};color:{Colors.Gray.Darken2}")" Elevation="0" Outlined="true">
                 <MudText Align="Align.Center" Typo="Typo.subtitle1">Entregues</MudText>
             </MudPaper>
-            <MudText Align="Align.Center" Typo="Typo.h4">@TotalEntregues</MudText>
+            <MudText Align="Align.Center" Typo="Typo.h4">@_totalEntregues</MudText>
         </MudListItem>
         <MudListItem>
             <MudPaper Class="mud-width-full mud-theme-secondary" Elevation="0" Outlined="true">
                 <MudText Align="Align.Center" Typo="Typo.subtitle1">Devolvidas</MudText>
             </MudPaper>
-            <MudText Align="Align.Center" Typo="Typo.h4">@TotalDevolvidas</MudText>
+            <MudText Align="Align.Center" Typo="Typo.h4">@_totalDevolvidas</MudText>
         </MudListItem>
         <MudListItem>
             <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Green.Default};color:#fff")" Elevation="0" Outlined="true">
                 <MudText Align="Align.Center" Typo="Typo.subtitle1">Avulsas</MudText>
             </MudPaper>
-            <MudText Align="Align.Center" Typo="Typo.h4">@TotalAvulsas</MudText>
+            <MudText Align="Align.Center" Typo="Typo.h4">@_totalAvulsas</MudText>
         </MudListItem>
         <MudListItem>
             <MudPaper Class="mud-width-full" Style="@($"background:{Colors.Indigo.Darken4};color:#fff")" Elevation="0" Outlined="true">
                 <MudText Align="Align.Center" Typo="Typo.subtitle1">Total de fichas</MudText>
             </MudPaper>
-            <MudText Align="Align.Center" Typo="Typo.h4">@TotalFichas</MudText>
+            <MudText Align="Align.Center" Typo="Typo.h4">@_totalFichas</MudText>
         </MudListItem>
     </MudList>
 </MudPaper>
 
 @code {
-    public int TotalFichas { get; set; }
-    public int TotalDistribuidas { get; set; }
-    public int TotalConfirmadas { get; set; }
-    public int TotalAvulsas { get; set; }
-    public int TotalEntregues { get; set; }
-    public int TotalDevolvidas { get; set; }
-    public int TotalRestantes => TotalDistribuidas - TotalEntregues - TotalDevolvidas;
+    private int _totalFichas;
+    private int _totalDistribuidas;
+    private int _totalAvulsas;
+    private int _totalEntregues;
+    private int _totalDevolvidas;
+    private int TotalRestantes => _totalDistribuidas - _totalEntregues - _totalDevolvidas;
 
     [Parameter]
     public EventCallback<List<Ticket>> OnAtualizarTickets { get; set; }
@@ -72,15 +80,26 @@
         }
     }
 
+    private StatusConexao _statusConexao = StatusConexao.Desconectado;
+    public StatusConexao StatusConexao
+    {
+        get => _statusConexao;
+        set
+        {
+            if (_statusConexao == value) return;
+            
+            _statusConexao = value;
+            StateHasChanged();
+        }
+    }
+
     private async Task CalcularTotais()
     {
-        TotalFichas = ListaTickets?.Count ?? 0;
-        TotalDistribuidas = ListaTickets?.Count(x => !string.IsNullOrWhiteSpace(x.Talao?.ResponsavelTalao)) ?? 0;
-        TotalConfirmadas = ListaTickets?.Count(x => (new[] { StatusTicket.Devolvido,
-            StatusTicket.Entregue, StatusTicket.Avulso }).Contains(x.Status)) ?? 0;
-        TotalAvulsas = ListaTickets?.Count(x => x.Status == StatusTicket.Avulso) ?? 0;
-        TotalEntregues = ListaTickets?.Count(x => x.Status == StatusTicket.Entregue) ?? 0;
-        TotalDevolvidas = ListaTickets?.Count(x => x.Status == StatusTicket.Devolvido) ?? 0;
+        _totalFichas = ListaTickets?.Count ?? 0;
+        _totalDistribuidas = ListaTickets?.Count(x => !string.IsNullOrWhiteSpace(x.Talao?.ResponsavelTalao)) ?? 0;
+        _totalAvulsas = ListaTickets?.Count(x => x.Status == StatusTicket.Avulso) ?? 0;
+        _totalEntregues = ListaTickets?.Count(x => x.Status == StatusTicket.Entregue) ?? 0;
+        _totalDevolvidas = ListaTickets?.Count(x => x.Status == StatusTicket.Devolvido) ?? 0;
 
         StateHasChanged();
 

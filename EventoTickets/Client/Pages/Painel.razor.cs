@@ -3,104 +3,131 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using System.Net.Http;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Microsoft.JSInterop;
-using EventoTickets.Client;
-using EventoTickets.Client.Shared;
+using EventoTickets.Client.Components;
 using EventoTickets.Shared;
 using Microsoft.AspNetCore.SignalR.Client;
 using MudBlazor;
-using static System.Net.WebRequestMethods;
 
 namespace EventoTickets.Client.Pages
 {
     public partial class Painel
     {
         [Parameter]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
-        #region Vari·veis globais
-        private List<Ticket> tickets;
-        private List<Ticket> ticketsRestantes;
-        private Evento evento;
-        private HubConnection hubConnection;
-        private System.Threading.Timer timer;
-        #endregion Vari·veis globais
+        #region Vari√°veis globais
+        private List<Ticket> _tickets = [];
+        private List<Ticket> _ticketsRestantes = [];
+        private Evento? _evento = null;
+        private HubConnection _hubConnection = null!;
+        private System.Threading.Timer _timer;
+        private ResumoFichas _resumoFichas = null!;
+        private bool _statusInicializado;
+
+        #endregion Vari√°veis globais
 
         protected override async Task OnInitializedAsync()
         {
             if (!string.IsNullOrWhiteSpace(Id))
             {
-                evento = await Http.GetFromJsonAsync<Evento>("api/eventos/" + Id);
+                _evento = await Http.GetFromJsonAsync<Evento>("api/eventos/" + Id);
             }
             else
             {
-                evento = await Http.GetFromJsonAsync<Evento>("api/eventos/GetEventoPadrao");
-                Id = evento?.EventoId;
+                _evento = await Http.GetFromJsonAsync<Evento>("api/eventos/GetEventoPadrao");
+                Id = _evento?.EventoId;
             }
 
-            if (evento == null)
-                evento = new Evento();
+            _evento ??= new Evento();
 
-            hubConnection = new HubConnectionBuilder().WithUrl(NavigationManager.ToAbsoluteUri("/eventohub"))
+            _hubConnection = new HubConnectionBuilder().WithUrl(NavigationManager.ToAbsoluteUri("/eventohub"))
                 .WithAutomaticReconnect()
                 .Build();
+            
+            _hubConnection.Reconnecting += (_) =>
+            {
+                _resumoFichas.StatusConexao = StatusConexao.Reconectando;
+                Snackbar.Add("Reconectando ao SignalR...", Severity.Warning);
+                return Task.CompletedTask;
+            };
+            
+            _hubConnection.Closed += (_) =>
+            {
+                _resumoFichas.StatusConexao = StatusConexao.Desconectado;
+                Snackbar.Add("Conex√£o com SignalR fechada.", Severity.Error);
+                return Task.CompletedTask;
+            };
 
-            hubConnection.Closed += async (error) =>
+            _hubConnection.Reconnected += async (_) =>
             {
                 await Task.Delay(new Random().Next(0, 5) * 1000);
-                await hubConnection.StartAsync();
+                _resumoFichas.StatusConexao = StatusConexao.Conectado;
                 await CarregarTickets();
             };
 
-            hubConnection.On<Ticket>("AtualizarTicketMessage", (ticket) =>
+            _hubConnection.On<Ticket?>("AtualizarTicketMessage", (ticket) =>
             {
-                if (ticket != null)
+                if (ticket is null) return;
+                
+                var ticketLancado = _tickets?.FirstOrDefault(t => t.TicketId.Equals(ticket.TicketId));
+
+                if (ticketLancado != null)
                 {
-                    var ticketLancado = tickets?.FirstOrDefault(t => t.TicketId.Equals(ticket.TicketId));
-
-                    if (ticketLancado != null)
-                    {
-                        ticketLancado.Status = ticket.Status;
-                        ticketLancado.DataConfirmacao = ticket.DataConfirmacao;
-                    }
-
-                    AtualizarRestantes();
+                    ticketLancado.Status = ticket.Status;
+                    ticketLancado.DataConfirmacao = ticket.DataConfirmacao;
                 }
+
+                AtualizarRestantes();
             });
 
-            // Quando houver atualizaÁ„o do talon·rio
-            hubConnection.On<string>("AtualizarTaloesMessage", (_) =>
+            // Quando houver atualiza√ß√£o do talon√°rio
+            _hubConnection.On<string>("AtualizarTaloesMessage", (_) =>
             {
                 CallCarregarTickets();
             });
 
-            // Verifica a cada 5 minutos que a conex„o com SignalR n„o foi fechada
-            timer = new System.Threading.Timer(async (object stateInfo) =>
+            // Verifica a cada 5 minutos que a conex√£o com SignalR n√£o foi fechada
+            _timer = new System.Threading.Timer(async stateInfo =>
             {
                 if (!IsConnected)
                 {
                     try
                     {
-                        Snackbar.Add($"Erro ao reconectar SignalR: {hubConnection.State}", Severity.Warning);
-                        await hubConnection.StartAsync();
+                        Snackbar.Add($"Erro ao reconectar SignalR: {_hubConnection.State}", Severity.Warning);
+                        await _hubConnection.StartAsync();
                         await CarregarTickets();
                     }
                     catch (Exception ex)
                     {
                         Snackbar.Add($"Erro ao reconectar SignalR: {ex.Message}", Severity.Error);
+                        _resumoFichas.StatusConexao = StatusConexao.Desconectado;
                     }
+
+                    return;
                 }
+
+                _resumoFichas.StatusConexao = StatusConexao.Conectado;
             }, new System.Threading.AutoResetEvent(false), 300000, 300000);
 
-            await hubConnection.StartAsync();
+            await _hubConnection.StartAsync()
+                .ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        Snackbar.Add($"Erro ao iniciar conex√£o com SignalR: {t.Exception?.GetBaseException().Message}", Severity.Error);
+                    }
+                });
             await CarregarTickets();
+        }
+
+        protected override void OnAfterRender(bool firstRender)
+        {
+            if (firstRender || _statusInicializado) 
+                return;
+            
+            _statusInicializado = true;
+            _resumoFichas.StatusConexao = IsConnected ? StatusConexao.Conectado : StatusConexao.Desconectado;
         }
 
         private void CallCarregarTickets()
@@ -111,23 +138,23 @@ namespace EventoTickets.Client.Pages
             });
         }
 
-        public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+        public bool IsConnected => _hubConnection.State == HubConnectionState.Connected;
 
         private async Task CarregarTickets()
         {
             try
             {
-                if (Id == null)
+                if (Id is null)
                     return;
 
                 var retornoTickets = await Http.GetFromJsonAsync<RetornoAcao<IEnumerable<Ticket>>>("api/tickets/CarregarTickets/" + Id);
                 if (retornoTickets.Sucesso)
                 {
-                    tickets = retornoTickets.Result.ToList();
+                    _tickets = [.. retornoTickets.Result];
                 }
                 else
                 {
-                    tickets = new();
+                    _tickets = new();
                     Snackbar.Add($"Erro ao carregar: {retornoTickets.MensagemErro}");
                 }
 
@@ -141,8 +168,8 @@ namespace EventoTickets.Client.Pages
 
         private void AtualizarRestantes()
         {
-            ticketsRestantes = tickets?.Where(x => x.Status == StatusTicket.EmAberto && 
-                !string.IsNullOrWhiteSpace(x.Talao?.ResponsavelTalao)).ToList();
+            _ticketsRestantes = _tickets?.Where(x => x.Status == StatusTicket.EmAberto && 
+                !string.IsNullOrWhiteSpace(x.Talao?.ResponsavelTalao)).ToList() ?? [];
             StateHasChanged();
         }
     }
