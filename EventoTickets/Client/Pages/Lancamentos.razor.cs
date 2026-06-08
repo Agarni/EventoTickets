@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Components.Web;
 using EventoTickets.Shared;
 using Microsoft.AspNetCore.SignalR.Client;
 using MudBlazor;
@@ -19,7 +18,7 @@ namespace EventoTickets.Client.Pages
     public partial class Lancamentos
     {
         [Parameter]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         #region Variáveis globais
 
@@ -117,8 +116,8 @@ namespace EventoTickets.Client.Pages
                 .Add(ModCode.Ctrl | ModCode.Shift, Code.E, AtivarDesativarFichaFinal, 
                     "Ativar/Desativar ficha final", Exclude.None);
 
-            if (_fichaInicial is not null)
-                await _fichaInicial.FocusAsync();
+            await _fichaInicial.FocusAsync();
+            await _fichaInicial.SelectAsync();
         }
 
         protected override void OnAfterRender(bool firstRender)
@@ -138,10 +137,12 @@ namespace EventoTickets.Client.Pages
             {
                 case true when _fichaInicial is not null:
                     await _fichaInicial.FocusAsync();
+                    await _fichaInicial.SelectAsync();
                     break;
                 
                 case false when _fichaFinal is not null:
                     await _fichaFinal.FocusAsync();
+                    await _fichaFinal.SelectAsync();
                     break;
             }
         }
@@ -205,12 +206,16 @@ namespace EventoTickets.Client.Pages
                 Snackbar.Add($"Informe um nº de ficha inicial entre {tickets.Min(x => x.NumeroTicket)} e {tickets.Max(x => x.NumeroTicket)}",
                     Severity.Warning);
                 await _fichaInicial.FocusAsync();
+                await _fichaInicial.SelectAsync();
                 return;
             }
 
             var listaTickets = ListaIdsTickets();
+
+            if (listaTickets.Count == 0)
+                return;
             
-            await AtualizarTicket(listaTickets.ToArray(), StatusTicket.Entregue);
+            await AtualizarTicket([.. listaTickets], StatusTicket.Entregue);
         }
 
         private async Task AtualizarTicket(int[] idsTickets, StatusTicket statusTicket)
@@ -219,13 +224,14 @@ namespace EventoTickets.Client.Pages
             {
                 Snackbar.Add("Informe o nº da ficha", Severity.Warning);
                 await _fichaInicial.FocusAsync();
+                await _fichaInicial.SelectAsync();
                 return;
             }
 
             var qtdFichas = lancamento.FichaFinal - lancamento.FichaInicial + 1;
             if (!_fichaFinalDesativada && qtdFichas > 5)
             {
-                var result = await DialogService.ShowMessageBox("Confirmação de lançamento de fichas", 
+                var result = await DialogService.ShowMessageBoxAsync("Confirmação de lançamento de fichas", 
                     $"Tem certeza que deseja realizar a {descricaoStatus(statusTicket).ToLower()} de {qtdFichas} fichas?",
                     yesText: "Sim", cancelText: "Não");
                 
@@ -308,6 +314,7 @@ namespace EventoTickets.Client.Pages
             }
 
             await _fichaInicial.FocusAsync();
+            await _fichaInicial.SelectAsync();
             return;
             
             string descricaoStatus(StatusTicket statusTicket1) =>
@@ -322,12 +329,17 @@ namespace EventoTickets.Client.Pages
 
         private async void DevolverTicket()
         {
-            await AtualizarTicket(ListaIdsTickets(StatusTicket.Devolvido)?.ToArray(), StatusTicket.Devolvido);
+            var idsTickets = ListaIdsTickets(StatusTicket.Devolvido).ToArray();
+
+            if (idsTickets.Length == 0)
+                return;
+
+            await AtualizarTicket(idsTickets, StatusTicket.Devolvido);
         }
 
         private async void ReabrirTicket()
         {
-            await AtualizarTicket(ListaIdsTickets(StatusTicket.EmAberto)?.ToArray(), StatusTicket.EmAberto);
+            await AtualizarTicket([.. ListaIdsTickets(StatusTicket.EmAberto)], StatusTicket.EmAberto);
         }
 
         private List<int> ListaIdsTickets(StatusTicket statusTicket = StatusTicket.Entregue)
@@ -340,10 +352,16 @@ namespace EventoTickets.Client.Pages
             // Considera somente os tickets em aberto quando entregar ou devolver
             if (statusTicket is StatusTicket.Entregue or StatusTicket.Devolvido)
             {
-                lst = lst.Where(x => x.Status == StatusTicket.EmAberto).ToList();
+                lst = [.. lst.Where(x => x.Status == StatusTicket.EmAberto)];
+
+                if (lst.Count == 0)
+                {
+                    Snackbar.Add("Não há fichas em aberto para o número informado.", Severity.Warning);
+                    return [];
+                }
             }
 
-            return lst.Select(x => x.TicketId).ToList();
+            return [.. lst.Select(x => x.TicketId)];
         }
 
         private class LancamentoFicha

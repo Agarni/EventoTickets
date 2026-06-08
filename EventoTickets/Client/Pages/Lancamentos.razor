@@ -95,9 +95,10 @@
 											<MudNumericField @ref="_fichaInicial" T="int" Label="Ficha inicial"
 											                 Style="max-width:150px;"
 											                 @bind-Value="numeroTicket" Required="true"
+											                 OnFocus="@(async () => await _fichaInicial.SelectAsync())"
 											                 Min="@tickets.Min(x => x.NumeroTicket)"
 											                 Max="@tickets.Max(x => x.NumeroTicket)"
-											                 MaxLength="@tickets.Max(x => x.NumeroTicket).ToString().Length"/>
+											                 MaxLength="@(tickets.Max(x => x.NumeroTicket).ToString().Length + 1)"/>
 										</div>
 										<div class="numeroFicha">
 											<MudTooltip Text="(Ctrl + Shift + E) Para ativar/desativar ficha final">

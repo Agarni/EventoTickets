@@ -165,7 +165,7 @@ namespace EventoTickets.Client.Pages
 
         async void ExcluirTalao(Talao talao)
         {
-            bool? result = await DialogService.ShowMessageBox("Excluir", "Confirma a exclusão do talão?",
+            bool? result = await DialogService.ShowMessageBoxAsync("Excluir", "Confirma a exclusão do talão?",
                yesText: "Excluir", cancelText: "Cancelar");
 
             if (result.GetValueOrDefault())

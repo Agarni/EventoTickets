@@ -95,7 +95,7 @@
 
     async void ExcluirEvento(string id)
     {
-        bool? result = await DialogService.ShowMessageBox("Excluir", "Confirma a exclusão do evento?",
+        bool? result = await DialogService.ShowMessageBoxAsync("Excluir", "Confirma a exclusão do evento?",
             yesText: "Excluir", cancelText: "Cancelar");
 
         if (result.GetValueOrDefault())
